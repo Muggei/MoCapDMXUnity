@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<Stream>
+<SkeletonDescriptions>
+<SkeletonDescription ID="1" Name="Daniel" BoneCount="21">
+<BoneDefs ID = "1" ParentID="0" Name="Daniel_Hip" x="0.00000" y="0.93227" z="0.00000"/>
+<BoneDefs ID = "2" ParentID="1" Name="Daniel_Ab" x="0.00000" y="0.08264" z="0.00000"/>
+<BoneDefs ID = "3" ParentID="2" Name="Daniel_Chest" x="0.00000" y="0.21170" z="0.00000"/>
+<BoneDefs ID = "4" ParentID="3" Name="Daniel_Neck" x="0.00000" y="0.21083" z="0.01917"/>
+<BoneDefs ID = "5" ParentID="4" Name="Daniel_Head" x="0.00000" y="0.14110" z="-0.02016"/>
+<BoneDefs ID = "6" ParentID="3" Name="Daniel_LShoulder" x="-0.04052" y="0.19303" z="-0.00002"/>
+<BoneDefs ID = "7" ParentID="6" Name="Daniel_LUArm" x="-0.11712" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "8" ParentID="7" Name="Daniel_LFArm" x="-0.33549" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "9" ParentID="8" Name="Daniel_LHand" x="-0.28648" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "10" ParentID="3" Name="Daniel_RShoulder" x="0.03991" y="0.19303" z="-0.00002"/>
+<BoneDefs ID = "11" ParentID="10" Name="Daniel_RUArm" x="0.11712" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "12" ParentID="11" Name="Daniel_RFArm" x="0.33549" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "13" ParentID="12" Name="Daniel_RHand" x="0.28648" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "14" ParentID="1" Name="Daniel_LThigh" x="-0.10079" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "15" ParentID="14" Name="Daniel_LShin" x="0.00000" y="-0.47875" z="0.00000"/>
+<BoneDefs ID = "16" ParentID="15" Name="Daniel_LFoot" x="0.00000" y="-0.36534" z="0.00000"/>
+<BoneDefs ID = "18" ParentID="1" Name="Daniel_RThigh" x="0.10079" y="0.00000" z="0.00000"/>
+<BoneDefs ID = "19" ParentID="18" Name="Daniel_RShin" x="0.00000" y="-0.47875" z="0.00000"/>
+<BoneDefs ID = "20" ParentID="19" Name="Daniel_RFoot" x="0.00000" y="-0.36534" z="0.00000"/>
+<BoneDefs ID = "17" ParentID="16" Name="Daniel_LToe" x="0.00000" y="-0.06551" z="0.15118"/>
+<BoneDefs ID = "21" ParentID="20" Name="Daniel_RToe" x="0.00000" y="-0.06551" z="0.15118"/>
+</SkeletonDescription>
+</SkeletonDescriptions>
+<Frames>
