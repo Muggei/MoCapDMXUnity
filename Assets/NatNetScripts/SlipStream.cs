@@ -29,7 +29,6 @@ using System;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using System.Xml;
 
 
 
@@ -39,7 +38,6 @@ public class SlipStream : MonoBehaviour
 {
     public string IP = "127.0.0.1";
     public int Port = 16000;
-    public bool SaveMoCapData = false;
 
     public event PacketReceivedHandler PacketNotification;
 
@@ -51,22 +49,10 @@ public class SlipStream : MonoBehaviour
     private string mPacket;
     private int mPreviousSubPacketIndex = 0;
     private const int kMaxSubPacketSize = 1400;
-
-    private System.IO.StreamWriter file;
-    private static XmlDocument xmlDocForData = new XmlDocument();
-
-    private static string StringOfCollectedMoCapData = "";
-
-    public static void SaveXmlData(string savePath) {
-        //XmlDocument xmlDocForData = new XmlDocument();
-        //xmlDocForData.LoadXml(StringOfCollectedMoCapData);
-        xmlDocForData.Save(savePath);
-    }
-	
+    
+    
 	void Start()
-	{
-        //file = new System.IO.StreamWriter(@"C:\Users\Daniel\Desktop\TestCapture2.txt", true);
-        
+	{        
         mReceiveBuffer = new byte[kMaxSubPacketSize];
 		mPacket        = System.String.Empty;
 		
@@ -108,11 +94,6 @@ public class SlipStream : MonoBehaviour
 						if(lastPacket)
 						{
                             //== ok packet has been created from sub packets and is complete ==--
-
-
-                            //file.WriteLine(mPacket);
-                            //if(SaveMoCapData) StringOfCollectedMoCapData += mPacket;
-
                             PacketsReceived++;
 
 							//== notify listeners ==--
@@ -136,6 +117,5 @@ public class SlipStream : MonoBehaviour
 	void Update()
 	{
 		UDPRead();
-	
 	}
 }

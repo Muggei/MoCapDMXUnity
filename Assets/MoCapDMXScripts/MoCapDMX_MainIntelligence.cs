@@ -8,6 +8,7 @@ using MoCapDMXScripts;
 
 public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
+    //Inspector Fields
     [SerializeField]public string DmxUdpDestIP;
     [SerializeField]public int DmxUdpPort;
     public UDPPackage.PROTOCOL_TYPE dmxProtocolType = UDPPackage.PROTOCOL_TYPE.ESP;
@@ -16,17 +17,23 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
     public UnityEngine.UI.InputField channelInputField;
     public UnityEngine.UI.InputField valueInputField;
 
+    //UDP Client
     private UdpClient udpClient;
     private UDPPackage dmxUDPPackage;
-    private float dmxSendingInterval = 0.04f;
+    private float dmxSendingInterval = 0.03f;
     private float period = 0.0f;
 
+    //UnityStreamer Excecutable (C++)
     private System.Diagnostics.Process natNetStreamerExecutable;
 
+    //Movinghead instances
     private MH_X25 x25_1, x25_2, x25_3, x25_4, x25_5;
     private MH_PicoWash40 pico_1, pico_2, pico_3, pico_4, pico_5, pico_6, pico_7, pico_8, pico_9, pico_10;
     private List<MH_X25> x25ers;
     private List<MH_PicoWash40> picoWashers;
+
+    //Global AudioManipulator
+    private AudioManipulator audioManipulator;
 
     private bool connectMovingHeadsToMoCap = false;
     private string ActorName;
@@ -71,6 +78,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         dotty.GetComponent<MeshRenderer>().material = Resources.Load("Black4", typeof(Material)) as Material;
 
         ActorName = this.GetComponent<MoCapDMXScripts.MoCapDataHandler>().Actor;
+        audioManipulator = this.GetComponent<AudioManipulator>();
 
         Console.enabled = false;
         Console.gameObject.SetActive(false);
@@ -97,7 +105,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
         if (period > dmxSendingInterval) {
             SendDmxUdpPackage();
-            //Debug.Log("Dmx UDP sent after: " + period.ToString());
+            UpdateVisualizationOfMovingheadsInUnityScene();
             period = 0;
         }
         period += UnityEngine.Time.deltaTime;
@@ -107,31 +115,37 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
             Vector3 point = new Vector3(0,0,0);
             switch (testCounter) {
                 case 0: {
-                         point = new Vector3(0, 2, 0);
+                        point = new Vector3(x25_1.Location.x, 0, x25_1.Location.z);// new Vector3(0, 0, 0);
                         dotty.transform.position = point;
                     }
                     break;
                 case 1:
                     {
-                         point = new Vector3(1, 4, 1);
+                        point = new Vector3(0, 2, 0);
                         dotty.transform.position = point;
                     }
                     break;
                 case 2:
                     {
-                         point = new Vector3(1, 0, -3);
+                         point = new Vector3(2, 0, 2);
                         dotty.transform.position = point;
                     }
                     break;
                 case 3:
                     {
-                         point = new Vector3(-1, 3, -1);
+                         point = new Vector3(1, 0, -1);
                         dotty.transform.position = point;
                     }
                     break;
                 case 4:
                     {
-                         point = new Vector3(-2, 0, 1);
+                         point = new Vector3(-3, 2, -3);
+                        dotty.transform.position = point;
+                    }
+                    break;
+                case 5:
+                    {
+                         point = new Vector3(-2.5f, 0, 2.5f);
                         dotty.transform.position = point;
                         testCounter = -1;
                     }
@@ -143,47 +157,15 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
             x25_3.PointTo(point);
             x25_4.PointTo(point);
             x25_5.PointTo(point);
-
-            //VISUALIZATION OF X25s in UNITY
-            MH_MainController scripty1 = GameObject.Find(x25_1.Name).GetComponent<MH_MainController>();
-            scripty1.CurrentPan = x25_1.CurrentPanAngle;
-            scripty1.CurrentTilt = x25_1.CurrentTiltAngle;
-
-            MH_MainController scripty2 = GameObject.Find(x25_2.Name).GetComponent<MH_MainController>();
-            scripty2.CurrentPan = x25_2.CurrentPanAngle;
-            scripty2.CurrentTilt = x25_2.CurrentTiltAngle;
-
-            MH_MainController scripty3 = GameObject.Find(x25_3.Name).GetComponent<MH_MainController>();
-            scripty3.CurrentPan = x25_3.CurrentPanAngle;
-            scripty3.CurrentTilt = x25_3.CurrentTiltAngle;
-
-            MH_MainController scripty4 = GameObject.Find(x25_4.Name).GetComponent<MH_MainController>();
-            scripty4.CurrentPan = x25_4.CurrentPanAngle;
-            scripty4.CurrentTilt = x25_4.CurrentTiltAngle;
-
-            MH_MainController scripty5 = GameObject.Find(x25_5.Name).GetComponent<MH_MainController>();
-            scripty5.CurrentPan = x25_5.CurrentPanAngle;
-            scripty5.CurrentTilt = x25_5.CurrentTiltAngle;
-
-            
-
             testCounter++;
-            
-            //SendDmxUdpPackage();
         }
         
         //Test the moving heads
         if (Input.GetKey(KeyCode.I)) {
             SetAllMovingHeadsTo100PercentWhiteAndLuminance();
-            //SendDmxUdpPackage();
         }
         if (Input.GetKeyDown(KeyCode.R)) {
             ResetOrInitializeMovingHeads();
-        }
-
-        //Save Session to XML (session only records when the bool is set)
-        if (Input.GetKeyDown(KeyCode.X)) {
-            SlipStream.SaveXmlData(@"C:\Users\Daniel\Desktop\MoCapData.xml");
         }
 
         //Console Command
@@ -219,8 +201,6 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         int value = Convert.ToInt32(valueInputField.textComponent.text);
 
         dmxUDPPackage[dmxUDPPackage.StartIndexOfDMXData + (int)channel] = (byte)value;
-
-        //SendDmxUdpPackage();
     }
 
     private void SetUpMovingHeads() {
@@ -233,27 +213,27 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
         x25_1.NormalVector = new Vector3(0, 0.5f, 0.5f);
         x25_1.Location = new Vector3(-0.2450f, 2.2691f, -0.0214f);
-        Debug.DrawRay(x25_1.Location, x25_1.NormalVector, UnityEngine.Color.red, 5.0f);
+        Debug.DrawRay(x25_1.Location, x25_1.NormalVector, UnityEngine.Color.red, 25.0f);
         x25_1.CurrentDirectionVector = x25_1.NormalVector;
 
         x25_2.NormalVector = new Vector3(-0.5f, 0.5f, 0);
         x25_2.Location = new Vector3(4.2234f, 2.2691f, 2.8780f);
-        Debug.DrawRay(x25_2.Location, x25_2.NormalVector, UnityEngine.Color.red, 5.0f);
+        Debug.DrawRay(x25_2.Location, x25_2.NormalVector, UnityEngine.Color.red, 25.0f);
         x25_2.CurrentDirectionVector = x25_2.NormalVector;
 
         x25_3.NormalVector = new Vector3(0.5f, 0.5f, 0);
         x25_3.Location = new Vector3(-4.6666f, 2.2691f, 2.6870f);
-        Debug.DrawRay(x25_3.Location, x25_3.NormalVector, UnityEngine.Color.red, 5.0f);
+        Debug.DrawRay(x25_3.Location, x25_3.NormalVector, UnityEngine.Color.red, 25.0f);
         x25_3.CurrentDirectionVector = x25_3.NormalVector;
 
         x25_4.NormalVector = new Vector3(0.5f, 0.5f, 0);
         x25_4.Location = new Vector3(-4.7965f, 2.2691f, -3.0309f);
-        Debug.DrawRay(x25_4.Location, x25_4.NormalVector, UnityEngine.Color.red, 5.0f);
+        Debug.DrawRay(x25_4.Location, x25_4.NormalVector, UnityEngine.Color.red, 25.0f);
         x25_4.CurrentDirectionVector = x25_4.NormalVector;
 
         x25_5.NormalVector = new Vector3(-0.5f, 0.5f, 0);
         x25_5.Location = new Vector3(4.2196f, 2.2691f, -3.2928f);
-        Debug.DrawRay(x25_5.Location, x25_5.NormalVector, UnityEngine.Color.red, 5.0f);
+        Debug.DrawRay(x25_5.Location, x25_5.NormalVector, UnityEngine.Color.red, 25.0f);
         x25_5.CurrentDirectionVector = x25_5.NormalVector;
 
         x25ers.Add(x25_1);
@@ -263,16 +243,16 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         x25ers.Add(x25_5);
 
         picoWashers = new List<MH_PicoWash40>();
-        pico_1 = new MH_PicoWash40(101, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_BackMiddle");
-        pico_2 = new MH_PicoWash40(126, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_BackDoorSide");
-        pico_3 = new MH_PicoWash40(151, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_DoorSideBack");
-        pico_4 = new MH_PicoWash40(176, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_MiddleDoorSide");
-        pico_5 = new MH_PicoWash40(201, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_MiddleWindowSide");
-        pico_6 = new MH_PicoWash40(226, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_WindowSideBack");
-        pico_7 = new MH_PicoWash40(251, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_WindowSideFront");
-        pico_8 = new MH_PicoWash40(276, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_FrontWindowSide");
-        pico_9 = new MH_PicoWash40(301, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_FrontDoorSide");
-        pico_10 = new MH_PicoWash40(326, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "Pico40_DoorSideFront");
+        pico_1 = new MH_PicoWash40(101, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_BackMiddle");
+        pico_2 = new MH_PicoWash40(126, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_BackDoorSide");
+        pico_3 = new MH_PicoWash40(151, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_DoorSideBack");
+        pico_4 = new MH_PicoWash40(176, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_MiddleDoorSide");
+        pico_5 = new MH_PicoWash40(201, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_MiddleWindowSide");
+        pico_6 = new MH_PicoWash40(226, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_WindowSideBack");
+        pico_7 = new MH_PicoWash40(251, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_WindowSideFront");
+        pico_8 = new MH_PicoWash40(276, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_FrontWindowSide");
+        pico_9 = new MH_PicoWash40(301, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_FrontDoorSide");
+        pico_10 = new MH_PicoWash40(326, MH_PicoWash40.CHANNELMODE.CH25, dmxUDPPackage, dmxUDPPackage.StartIndexOfDMXData, "PicoWash40_DoorSideFront");
 
         picoWashers.Add(pico_1);
         picoWashers.Add(pico_2);
@@ -327,114 +307,171 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
     }
 
     private void ProcessMoCapDMX() {
+
+
+        //MarkerFunctionalityLink Link1 = new MarkerFunctionalityLink(ActorName + "_Head", x25_1.Pan, true);
+        //MarkerFunctionalityLink Link2 = new MarkerFunctionalityLink(ActorName + "_Head", x25_2.Pan, true);
+        //MarkerFunctionalityLink Link3 = new MarkerFunctionalityLink(ActorName + "_Head", x25_3.Pan, true);
+        //MarkerFunctionalityLink Link4 = new MarkerFunctionalityLink(ActorName + "_Head", x25_4.Pan, true);
+        //MarkerFunctionalityLink Link5 = new MarkerFunctionalityLink(ActorName + "_Head", x25_5.Pan, true);
+        //MarkerFunctionalityLink Link6 = new MarkerFunctionalityLink(ActorName + "_Head", pico_1.Pan, true);
+        //MarkerFunctionalityLink Link7 = new MarkerFunctionalityLink(ActorName + "_Head", pico_2.Pan, true);
+        //MarkerFunctionalityLink Link8 = new MarkerFunctionalityLink(ActorName + "_LUArm", pico_1.Tilt, true);
+        //MarkerFunctionalityLink Link9 = new MarkerFunctionalityLink(ActorName + "_RUArm", pico_2.Tilt, true);
+
+        //foreach (MarkerFunctionalityLink link in GlobalLinkerCollection.Instance)
+        //{
+        //    link.Excecute();
+        //}
+
         MoCapBone Head = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_Head");
-        MoCapBone Chest = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_Chest");
+        //MoCapBone Chest = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_Chest");
 
-        if (Chest != null) {
-            float yPosInCentiMeter = Chest.Position.y * 100;
-            //if (yPosInCentiMeter <= 100.0f)
-            //{
-            //    this.GetComponent<AudioManipulator>().SetMasterVolume(-(100-yPosInCentiMeter)/4);
-            //}
-            //else {
-            //    this.GetComponent<AudioManipulator>().SetMasterVolume(0.0f);
-            //}
-            if (yPosInCentiMeter <= 100.0f)
-            {
-                //Debug.Log("FREQ SET: " + ((100 - yPosInCentiMeter) * 4));
-                this.GetComponent<AudioManipulator>().SetHighPassFilter((100 - yPosInCentiMeter) * 100);
-            }
-            else
-            {
-                this.GetComponent<AudioManipulator>().SetHighPassFilter(10.0f);
-            }
-        }
+        //if (Chest != null) {
+        //    float yPosInCentiMeter = Chest.Position.y * 100;
+        //    //if (yPosInCentiMeter <= 100.0f)
+        //    //{
+        //    //    this.GetComponent<AudioManipulator>().SetMasterVolume(-(100-yPosInCentiMeter)/4);
+        //    //}
+        //    //else {
+        //    //    this.GetComponent<AudioManipulator>().SetMasterVolume(0.0f);
+        //    //}
+        //    if (yPosInCentiMeter <= 100.0f)
+        //    {
+        //        //Debug.Log("FREQ SET: " + ((100 - yPosInCentiMeter) * 4));
+        //        this.GetComponent<AudioManipulator>().SetHighPassFilter((100 - yPosInCentiMeter) * 100);
+        //    }
+        //    else
+        //    {
+        //        this.GetComponent<AudioManipulator>().SetHighPassFilter(10.0f);
+        //    }
+        //}
 
-        if (Head != null) {
+        if (Head != null)
+        {
             Vector3 headPos = new Vector3(Head.Position.x, 0.0f, Head.Position.z);
 
-            x25_1.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
-            x25_2.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
-            x25_3.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
-            x25_4.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
-            x25_5.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
+            //x25_1.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
+            //x25_2.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
+            //x25_3.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
+            //x25_4.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
+            //x25_5.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
 
-            //x25_1.PointTo(Head.Position);
-            //x25_2.PointTo(Head.Position);
-            //x25_3.PointTo(Head.Position);
-            //x25_4.PointTo(Head.Position);
-            //x25_5.PointTo(Head.Position);
+            x25_1.PointTo(Head.Position);
+            x25_2.PointTo(Head.Position);
+            x25_3.PointTo(Head.Position);
+            x25_4.PointTo(Head.Position);
+            x25_5.PointTo(Head.Position);
 
-            UpdateVisualizationOfMovingheadsInUnityScene();
+
         }
 
-        MoCapBone LeftHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_LFArm");
-        MoCapBone RightHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_RFArm");
-        if (LeftHand != null && RightHand != null)
-        {
+        //MoCapBone LeftHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_LFArm");
+        //MoCapBone RightHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_RFArm");
+        //if (LeftHand != null && RightHand != null)
+        //{
+        //    float pan = LeftHand.Rotation.eulerAngles.y;
+        //    pico_10.Pan(pan);
+        //    pico_3.Pan(pan);
 
-            float pan = LeftHand.Rotation.eulerAngles.y / (540.0f / 255.0f);
-            pico_10.Pan((uint)pan);
-            pico_3.Pan((uint)pan);
-            //x25_5.Pan((uint)pan);
+        //    float tilt = LeftHand.Rotation.eulerAngles.z;
+        //    pico_10.Tilt(tilt);
+        //    pico_3.Tilt(tilt);
 
-            float tilt = LeftHand.Rotation.eulerAngles.z / (180.0f / 255.0f);
-            float tiltx25 = LeftHand.Rotation.eulerAngles.z / (270.0f / 255.0f);
-            pico_10.Tilt((uint)tilt);
-            pico_3.Tilt((uint)tilt);
-            //x25_5.Tilt((uint)tilt);
+        //    float panRight = (RightHand.Rotation.eulerAngles.y + 180.0f);
+        //    pico_6.Pan(panRight);
+        //    pico_7.Pan(panRight);
 
-            float panRight = (RightHand.Rotation.eulerAngles.y + 180.0f) / (540.0f / 255.0f);
-            pico_6.Pan((uint)(panRight));
-            pico_7.Pan((uint)(panRight));
-           // x25_4.Pan((uint)(panRight));
+        //    float tiltRight = (RightHand.Rotation.eulerAngles.z - 180.0f);
+        //    pico_6.Tilt(tiltRight);
+        //    pico_7.Tilt(tiltRight);
+        //    //float pan = LeftHand.Rotation.eulerAngles.y / (540.0f / 255.0f);
+        //    //pico_10.Pan((uint)pan);
+        //    //pico_3.Pan((uint)pan);
 
-            float tiltRight = (RightHand.Rotation.eulerAngles.z - 180.0f) / (180.0f / 255.0f);
-            float tiltRightx25 = (RightHand.Rotation.eulerAngles.z - 90.0f) / (270.0f / 255.0f);
-            pico_6.Tilt((uint)(tiltRight));
-            pico_7.Tilt((uint)(tiltRight));
-            //x25_4.Tilt((uint)tiltRightx25);
-            float distance = (Vector3.Distance(LeftHand.Position, RightHand.Position)) * 100.0f;
-            //Debug.Log("Tilt Left und Tilt Right: " + tilt + "/" + tiltRight);
-            if (distance < 30.0f)
-            {
-                pico_6.Strobo((uint)(255 - distance * 3));
-                pico_7.Strobo((uint)(255 - distance * 3));
-                pico_4.Strobo((uint)(255 - distance * 3));
-                pico_10.Strobo((uint)(255 - distance * 3));
-            }
-            else
-            {
-                pico_4.Strobo(0);
-                pico_6.Strobo(0);
-                pico_7.Strobo(0);
-                pico_10.Strobo(0);
-            }
-            //SendDmxUdpPackage();
-        }
+        //    //float tilt = LeftHand.Rotation.eulerAngles.z / (180.0f / 255.0f);
+        //    //pico_10.Tilt((uint)tilt);
+        //    //pico_3.Tilt((uint)tilt);
+
+        //    //float panRight = (RightHand.Rotation.eulerAngles.y + 180.0f) / (540.0f / 255.0f);
+        //    //pico_6.Pan((uint)(panRight));
+        //    //pico_7.Pan((uint)(panRight));
+
+        //    //float tiltRight = (RightHand.Rotation.eulerAngles.z - 180.0f) / (180.0f / 255.0f);
+        //    //pico_6.Tilt((uint)(tiltRight));
+        //    //pico_7.Tilt((uint)(tiltRight));
+        //    float distance = (Vector3.Distance(LeftHand.Position, RightHand.Position)) * 100.0f;
+        //    if (distance < 30.0f)
+        //    {
+        //        pico_6.Strobo((uint)(255 - distance * 3));
+        //        pico_7.Strobo((uint)(255 - distance * 3));
+        //        pico_4.Strobo((uint)(255 - distance * 3));
+        //        pico_10.Strobo((uint)(255 - distance * 3));
+        //    }
+        //    else
+        //    {
+        //        pico_4.Strobo(0);
+        //        pico_6.Strobo(0);
+        //        pico_7.Strobo(0);
+        //        pico_10.Strobo(0);
+        //    }
+        //}
     }
 
 
     public void UpdateVisualizationOfMovingheadsInUnityScene() {
         MH_MainController scripty1 = GameObject.Find(x25_1.Name).GetComponent<MH_MainController>();
-        scripty1.CurrentPan = x25_1.CurrentPanAngle;
-        scripty1.CurrentTilt = x25_1.CurrentTiltAngle;
+        scripty1.CurrentPan = x25_1.fCurrentPanAngle;
+        scripty1.CurrentTilt = x25_1.fCurrentTiltAngle;
 
         MH_MainController scripty2 = GameObject.Find(x25_2.Name).GetComponent<MH_MainController>();
-        scripty2.CurrentPan = x25_2.CurrentPanAngle;
-        scripty2.CurrentTilt = x25_2.CurrentTiltAngle;
+        scripty2.CurrentPan = x25_2.fCurrentPanAngle;
+        scripty2.CurrentTilt = x25_2.fCurrentTiltAngle;
 
         MH_MainController scripty3 = GameObject.Find(x25_3.Name).GetComponent<MH_MainController>();
-        scripty3.CurrentPan = x25_3.CurrentPanAngle;
-        scripty3.CurrentTilt = x25_3.CurrentTiltAngle;
+        scripty3.CurrentPan = x25_3.fCurrentPanAngle;
+        scripty3.CurrentTilt = x25_3.fCurrentTiltAngle;
 
         MH_MainController scripty4 = GameObject.Find(x25_4.Name).GetComponent<MH_MainController>();
-        scripty4.CurrentPan = x25_4.CurrentPanAngle;
-        scripty4.CurrentTilt = x25_4.CurrentTiltAngle;
+        scripty4.CurrentPan = x25_4.fCurrentPanAngle;
+        scripty4.CurrentTilt = x25_4.fCurrentTiltAngle;
 
         MH_MainController scripty5 = GameObject.Find(x25_5.Name).GetComponent<MH_MainController>();
-        scripty5.CurrentPan = x25_5.CurrentPanAngle;
-        scripty5.CurrentTilt = x25_5.CurrentTiltAngle;
+        scripty5.CurrentPan = x25_5.fCurrentPanAngle;
+        scripty5.CurrentTilt = x25_5.fCurrentTiltAngle;
+
+        MH_MainController pico1Script = GameObject.Find(pico_1.Name).GetComponent<MH_MainController>();
+        pico1Script.CurrentPan = pico_1.fCurrentPanAngle;
+        pico1Script.CurrentTilt = pico_1.fCurrentTiltAngle;
+
+        MH_MainController pico2Script = GameObject.Find(pico_2.Name).GetComponent<MH_MainController>();
+        pico2Script.CurrentPan = pico_2.fCurrentPanAngle;
+        pico2Script.CurrentTilt = pico_2.fCurrentTiltAngle;
+
+        MH_MainController pico3Script = GameObject.Find(pico_3.Name).GetComponent<MH_MainController>();
+        pico3Script.CurrentPan = pico_3.fCurrentPanAngle;
+        pico3Script.CurrentTilt = pico_3.fCurrentTiltAngle;
+        MH_MainController pico4Script = GameObject.Find(pico_4.Name).GetComponent<MH_MainController>();
+        pico4Script.CurrentPan = pico_4.fCurrentPanAngle;
+        pico4Script.CurrentTilt = pico_4.fCurrentTiltAngle;
+        MH_MainController pico5Script = GameObject.Find(pico_5.Name).GetComponent<MH_MainController>();
+        pico5Script.CurrentPan = pico_5.fCurrentPanAngle;
+        pico5Script.CurrentTilt = pico_5.fCurrentTiltAngle;
+        MH_MainController pico6Script = GameObject.Find(pico_6.Name).GetComponent<MH_MainController>();
+        pico6Script.CurrentPan = pico_6.fCurrentPanAngle;
+        pico6Script.CurrentTilt = pico_6.fCurrentTiltAngle;
+        MH_MainController pico7Script = GameObject.Find(pico_7.Name).GetComponent<MH_MainController>();
+        pico7Script.CurrentPan = pico_7.fCurrentPanAngle;
+        pico7Script.CurrentTilt = pico_7.fCurrentTiltAngle;
+        MH_MainController pico8Script = GameObject.Find(pico_8.Name).GetComponent<MH_MainController>();
+        pico8Script.CurrentPan = pico_8.fCurrentPanAngle;
+        pico8Script.CurrentTilt = pico_8.fCurrentTiltAngle;
+        MH_MainController pico9Script = GameObject.Find(pico_9.Name).GetComponent<MH_MainController>();
+        pico9Script.CurrentPan = pico_9.fCurrentPanAngle;
+        pico9Script.CurrentTilt = pico_9.fCurrentTiltAngle;
+        MH_MainController pico10Script = GameObject.Find(pico_10.Name).GetComponent<MH_MainController>();
+        pico10Script.CurrentPan = pico_10.fCurrentPanAngle;
+        pico10Script.CurrentTilt = pico_10.fCurrentTiltAngle;
     }
 }
 

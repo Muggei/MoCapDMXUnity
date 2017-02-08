@@ -46,6 +46,9 @@ namespace MoCapDMXScripts.MovingHeads
 
 
         //Variables for saiving current State of Movinghead
+        public float fCurrentPanAngle { get; private set; }
+        public float fCurrentTiltAngle { get; private set; }
+
         public uint CurrentPanValue { get; private set; }
         public uint CurrentTiltValue { get; private set; }
         public int CurrentPanAngle { get; private set; }
@@ -61,6 +64,8 @@ namespace MoCapDMXScripts.MovingHeads
 
         public float PanDegreePerDmxValue = 540.0f / 255.0f;
         public float TiltDegreePerDmxValue = 270.0f / 255.0f;
+        public float PanDegreePerDmxValue_16Bit = 540.0f / 65536.0f;
+        public float TiltDegreePerDmxValue_16Bit = 270.0f / 65536.0f;
 
         public MH_X25(int startAddress, CHANNELMODE channelmode, List<byte> dmxUDPPackage, int startIndexOfDMXData, string name = "") {
             StartAddress = startAddress;
@@ -86,6 +91,17 @@ namespace MoCapDMXScripts.MovingHeads
             }
 
         }
+
+        public void Pan(float angle) {
+            if (NumberOfChannels == (int)CHANNELMODE.CH12) {
+                UInt16 pan = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
+
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(pan & 0xff);
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress] = (byte)(0xff & (pan >> 8));
+                fCurrentPanAngle = angle;
+            }
+        }
+
         public void Tilt(uint dmxValue) {
             if (dmxValue < 0 || dmxValue > 255)
             {
@@ -100,6 +116,18 @@ namespace MoCapDMXScripts.MovingHeads
                 }
             }
         }
+
+        public void Tilt(float angle) {
+            if (NumberOfChannels == (int)CHANNELMODE.CH12)
+            {
+                UInt16 tilt = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
+
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(0xff & (tilt >> 8));
+                fCurrentTiltAngle = angle;
+            }
+        }
+
         public void MasterDimmer(uint dmxValue) {
             if (dmxValue < 0 || dmxValue > 255)
             {
@@ -177,57 +205,38 @@ namespace MoCapDMXScripts.MovingHeads
             Vector2 currentXZ = new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z);
             float panAngle = Vector2.Angle(normalXZ,currentXZ);
 
-            Vector3 normalTilt = new Vector3(CurrentDirectionVector.x, NormalVector.y, CurrentDirectionVector.z);
-            Vector3 currentTilt = new Vector3(CurrentDirectionVector.x,destPoint.y,CurrentDirectionVector.z);
+
+
+            Vector3 normalTilt;
+            if (CurrentDirectionVector.x == 0 && CurrentDirectionVector.z == 0)
+            {
+                normalTilt = NormalVector;
+            }
+            else
+            {
+                normalTilt = new Vector3(CurrentDirectionVector.x, NormalVector.y, CurrentDirectionVector.z);
+            }
+
+            Vector3 currentTilt = CurrentDirectionVector; // new Vector3(CurrentDirectionVector.x,destPoint.y,CurrentDirectionVector.z);
+
+
+            Debug.DrawRay(Location, normalTilt, UnityEngine.Color.yellow, 15.0f);
+            Debug.DrawRay(Location, currentTilt, UnityEngine.Color.blue, 15.0f);
             float tiltAngle = Vector3.Angle(normalTilt, currentTilt);// +45;
 
             panAngle = HandlePanAngleResult(currentXZ, panAngle);
             
 
-            
-            //Debug.DrawRay(Location, normalTilt ,UnityEngine.Color.blue,5.0f);
-            //Debug.DrawRay(Location, currentTilt,UnityEngine.Color.blue, 5.0f);
+            //CurrentPanAngle = (int)panAngle;
+            //CurrentTiltAngle = 135-(int)tiltAngle;
 
-            CurrentPanAngle = (int)panAngle;
-            CurrentTiltAngle = 135-(int)tiltAngle;
-
-            Debug.Log(this.ToString()+ ": pan, tilt: " + CurrentPanAngle + "/" + CurrentTiltAngle  );
+            Debug.Log(this.ToString()+ ": pan, tilt: " + panAngle + "/" + tiltAngle);
 
             //TODO: Implement 16Bit Version of Panning and Tilting
-            this.Pan((uint)((uint)CurrentPanAngle / PanDegreePerDmxValue));
-            this.Tilt((uint)((uint)CurrentTiltAngle / TiltDegreePerDmxValue));
-
-            //float angleX = Vector3.Angle(new Vector3(this.Location.x, 0, 0), new Vector3(destPoint.x, 0, 0));
-            //float angleY = Vector3.Angle(new Vector3(0, this.Location.y, 0), new Vector3(0, destPoint.y, 0));
-            //float angleZ = Vector3.Angle(new Vector3(0, 0, this.Location.z), new Vector3(0, 0, destPoint.z));
-            //float angleXZ = Vector3.Angle(new Vector3(this.Location.x, 0, this.Location.z).normalized, new Vector3(destPoint.x, 0, destPoint.z).normalized);
-
-            //this.Pan((uint)(angleX / (540.0f / 255.0f)));
-            //this.Tilt((uint)(angleY / (270.0f / 255.0f)));
-
-            //Vector2 xzDest = new Vector2(destPoint.x, destPoint.z).normalized;
-            //Vector2 xzSrc = new Vector2(this.Location.x, this.Location.z).normalized;
-
-            //Vector2 xyDest = (new Vector2(destPoint.x, destPoint.y)).normalized;
-            //Vector2 xySrc = (new Vector2(this.Location.x, this.Location.y)).normalized;
-
-            //float pan = Vector2.Angle(xzSrc, xzDest);
-            //float tilt = Vector2.Angle(xySrc, xyDest);
-
-            //this.Pan((uint)(pan / (540.0f / 255.0f)));
-            //this.Tilt((uint)(tilt / (270.0f / 255.0f)) + 43);
-
-            //float angle = Vector3.Angle(this.Location, destPoint);
-            //float sign = Mathf.Sign(Vector3.Dot(NormalVector, Vector3.Cross(this.Location, destPoint)));
-            //float resultingAngle =  angle * sign;
-
-            //float anglePan = Vector3.Angle(this.Location, destPoint);
-            //float signPan = Mathf.Sign(Vector3.Dot(Vector3.down, Vector3.Cross(this.Location, destPoint)));
-            //float resultingAnglePan = angle * sign;
-
-            //this.Pan((uint)(resultingAnglePan / (540 / 255)));
-            //this.Tilt((uint)(resultingAngle / (270 / 255)));
-            //Debug.Log("Resulting Angle of Point to Method: " + resultingAngle.ToString() + "// With Vec dest, src and normal: " + destPoint.ToString() + "," + this.Location + "," + NormalVector);
+            //this.Pan((uint)((uint)CurrentPanAngle / PanDegreePerDmxValue));
+            //this.Tilt((uint)((uint)CurrentTiltAngle / TiltDegreePerDmxValue));
+            this.Pan(panAngle);
+            this.Tilt(tiltAngle);
         }
 
         private float HandlePanAngleResult(Vector2 XZ, float angle) {

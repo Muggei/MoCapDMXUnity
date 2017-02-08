@@ -24,7 +24,7 @@ namespace Assets
         [InspectorButton("OnReplayClicked")]
         public bool ReplayLoop;
         private bool ReplayRunning = false;
-
+        
         public MoCapDMXScripts.MoCapDataHandler DMXDataHandler;
         private XmlDocument xmlDoc = new XmlDocument();
         private XmlNodeList skeletonDescriptionList;
@@ -37,7 +37,6 @@ namespace Assets
             xmlIsLoaded = true;
 
             skeletonDescriptionList = xmlDoc.GetElementsByTagName("SkeletonDescriptions");
-            Debug.Log(skeletonDescriptionList[0].InnerText + "//" + skeletonDescriptionList[0].InnerXml);
 
             frameInfoList = xmlDoc.GetElementsByTagName("Frame");
             maxFrameCount = frameInfoList.Count;
@@ -56,8 +55,9 @@ namespace Assets
         {
             if (ReplayRunning)
             {
-                MocapFrame++;
-                if (MocapFrame == maxFrameCount) MocapFrame = 1;
+                //Update method is 60fps, recorded session is 120fps. skip every second frame for compensation
+                MocapFrame+=2;
+                if (MocapFrame >= maxFrameCount) MocapFrame = 1;
             }
 
             if (currentFrame == MocapFrame)
@@ -66,10 +66,7 @@ namespace Assets
             }
 
             currentFrame = MocapFrame;
-
-            //this.gameObject.GetComponent<LivePoseAnimator>().OnSamplePacket( MocapFrameData(currentFrame) );
-            //PoseAnimator.OnSamplePacket(MocapFrameData(currentFrame));
-            Debug.Log("Sample has been sent!" + MocapFrame.ToString());
+            
             string frameString = frameInfoList[MocapFrame].InnerXml;
             DMXDataHandler.OnSamplePacket("<?xml version=\"1.0\" ?><Stream>\n" + frameString + "</Stream>");
         }

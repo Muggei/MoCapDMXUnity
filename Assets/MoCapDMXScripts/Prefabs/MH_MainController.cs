@@ -7,16 +7,22 @@ public class MH_MainController : MonoBehaviour {
 	[SerializeField] public GameObject MH_RotationBase;
 	[SerializeField] public GameObject MH_Head;
 	[SerializeField] public Light MH_Lightsource;
+    [SerializeField] public GameObject LightRay;
+    public enum MHModel {
+        MH_X25 = 0,
+        PicoWash40 = 1
+    }
+    public MHModel ModelType;
 
     public string Name;
 
     public int MaxPan;
     public int MaxTilt;
 
-    public int CurrentPan;
-    public int CurrentTilt;
-    private int m_Pan;
-    private int m_Tilt;
+    public float CurrentPan;
+    public float CurrentTilt;
+    private float m_Pan;
+    private float m_Tilt;
 
     public Vector2 InitialRotationsPanTilt;
     public Vector3 CurrentVector;
@@ -24,18 +30,25 @@ public class MH_MainController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        CurrentTilt = (int)InitialRotationsPanTilt.y;
-        CurrentPan = (int)InitialRotationsPanTilt.x;
+        CurrentTilt = InitialRotationsPanTilt.y;
+        CurrentPan = InitialRotationsPanTilt.x;
         m_Pan = CurrentPan;
         m_Tilt = CurrentTilt;
+
+        //this.LightRay.gameObject.SetActive(false);
 		this.MH_RotationBase = MH_RotationBase.gameObject;
 		this.MH_Head = MH_Head.gameObject;
 		this.currentLightColor = MH_Lightsource.color;
         this.MH_RotationBase.transform.Rotate(new Vector3(0,  CurrentPan, 0));
-        this.MH_Head.transform.Rotate(new Vector3(0, 0,  135-CurrentTilt));
-
-        //MH_RotationBase.transform.rotation = new Quaternion (0, 0, 0, 0);
-        //MH_Head.transform.rotation = new Quaternion (0, 0, 0, 0);
+        if(ModelType == MHModel.MH_X25)
+        {
+            this.MH_Head.transform.Rotate(new Vector3(0, 0, 135 - CurrentTilt));
+        }
+        if (ModelType == MHModel.PicoWash40)
+        {
+            //this.MH_Head.transform.TransformVector(CurrentVector);
+            this.MH_Head.transform.Rotate(new Vector3(0, 0, 90- CurrentTilt));
+        }
     }
 
 	// Update is called once per frame
@@ -70,7 +83,7 @@ public class MH_MainController : MonoBehaviour {
             this.MH_Head.transform.Rotate(new Vector3(0, 0, m_Tilt -CurrentTilt));
             m_Tilt = CurrentTilt;
         }
-
+         
         
         //this.MH_RotationBase.transform.eulerAngles.Set(0, CurrentPan, 0);
         //this.MH_RotationBase.transform.eulerAngles.Set(0, 0, 135 - CurrentTilt);

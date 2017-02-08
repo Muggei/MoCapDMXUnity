@@ -80,6 +80,47 @@ namespace MoCapDMXScripts
                     qw = -qw;
 
                     bones.Add(new MoCapBone(iD, boneName, new Vector3(x, y, z), new Quaternion(qx, qy, qz, qw)));
+
+                    //== bone pose ==--
+
+                    Vector3 position = new Vector3(x, y, z);
+                    Quaternion orientation = new Quaternion(qx, qy, qz, qw);
+                    string objectName = boneName;
+                    GameObject bone;
+
+                    bone = GameObject.Find(objectName);
+                    if (bone == null) {
+                        bone = new GameObject();
+                        bone.name = objectName;
+                    }
+                    if (bone != null)
+                    {
+                        bone.transform.localPosition = position;
+                        bone.transform.localRotation = orientation;
+
+                        //== create a cube visually so you can see the raw mocap data ==--
+
+                        if (objectName.Contains(Actor))
+                        {
+                            Transform visualTransform = bone.transform.FindChild(objectName + "Visual");
+
+                            if (ShowMocapData && visualTransform == null)
+                            {
+                                GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                                Vector3 scale = new Vector3(0.1f, 0.1f, 0.1f);
+                                visual.transform.localScale = scale;
+                                visual.name = objectName + "Visual";
+                                visual.transform.parent = bone.transform;
+                                visual.transform.localPosition = new Vector3(0, 0, 0);
+                                visual.transform.localRotation = Quaternion.Euler(0, 0, 0);
+                            }
+
+                            if (ShowMocapData == false && visualTransform != null)
+                            {
+                                GameObject.Destroy(visualTransform.gameObject);
+                            }
+                        }
+                    }
                 }
                 CurrentMoCapFrame.Instance.bones = bones;
 

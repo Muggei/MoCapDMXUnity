@@ -30,12 +30,20 @@ namespace MoCapDMXScripts.MovingHeads
 
 
         //Variables for saiving current State of Movinghead
+        public float fCurrentPanAngle { get; private set; }
+        public float fCurrentTiltAngle { get; private set; }
+
+
         public uint CurrentPanValue { get; private set; }
         public uint CurrentTiltValue { get; private set; }
         public uint CurrentDimmerValue { get; private set; }
         public uint CurrentStroboValue { get; private set; }
 
         public Vector3 Location { get; set; }
+
+
+        public float PanDegreePerDmxValue_16Bit = 540.0f / 65536.0f;
+        public float TiltDegreePerDmxValue_16Bit = 270.0f / 65536.0f;
 
 
 
@@ -66,6 +74,19 @@ namespace MoCapDMXScripts.MovingHeads
             }
 
         }
+
+        public void Pan(float angle)
+        {
+            if (NumberOfChannels == (int)CHANNELMODE.CH25)
+            {
+                UInt16 pan = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
+
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(pan & 0xff);
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress] = (byte)(0xff & (pan >> 8));
+                fCurrentPanAngle = angle;
+            }
+        }
+
         public void Tilt(uint dmxValue)
         {
             if (dmxValue < 0 || dmxValue > 255)
@@ -79,6 +100,18 @@ namespace MoCapDMXScripts.MovingHeads
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)dmxValue;
                     CurrentTiltValue = dmxValue;
                 }
+            }
+        }
+
+        public void Tilt(float angle)
+        {
+            if (NumberOfChannels == (int)CHANNELMODE.CH25)
+            {
+                UInt16 tilt = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
+
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
+                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(0xff & (tilt >> 8));
+                fCurrentTiltAngle = angle;
             }
         }
         public void MasterDimmer(uint dmxValue)
