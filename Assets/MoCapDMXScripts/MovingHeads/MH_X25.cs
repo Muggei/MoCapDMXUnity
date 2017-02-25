@@ -120,7 +120,7 @@ namespace MoCapDMXScripts.MovingHeads
         public void Tilt(float angle) {
             if (NumberOfChannels == (int)CHANNELMODE.CH12)
             {
-                UInt16 tilt = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
+                UInt16 tilt = (UInt16)(angle / TiltDegreePerDmxValue_16Bit);
 
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(0xff & (tilt >> 8));
@@ -205,36 +205,10 @@ namespace MoCapDMXScripts.MovingHeads
             Vector2 currentXZ = new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z);
             float panAngle = Vector2.Angle(normalXZ,currentXZ);
 
-
-
-            Vector3 normalTilt;
-            if (CurrentDirectionVector.x == 0 && CurrentDirectionVector.z == 0)
-            {
-                normalTilt = NormalVector;
-            }
-            else
-            {
-                normalTilt = new Vector3(CurrentDirectionVector.x, NormalVector.y, CurrentDirectionVector.z);
-            }
-
-            Vector3 currentTilt = CurrentDirectionVector; // new Vector3(CurrentDirectionVector.x,destPoint.y,CurrentDirectionVector.z);
-
-
-            Debug.DrawRay(Location, normalTilt, UnityEngine.Color.yellow, 15.0f);
-            Debug.DrawRay(Location, currentTilt, UnityEngine.Color.blue, 15.0f);
-            float tiltAngle = Vector3.Angle(normalTilt, currentTilt);// +45;
+            float result = (float)(Math.Acos(this.Location.y / (destPoint - Location).magnitude) * (180.0f/Math.PI));
+            float tiltAngle = 135 - result;
 
             panAngle = HandlePanAngleResult(currentXZ, panAngle);
-            
-
-            //CurrentPanAngle = (int)panAngle;
-            //CurrentTiltAngle = 135-(int)tiltAngle;
-
-            Debug.Log(this.ToString()+ ": pan, tilt: " + panAngle + "/" + tiltAngle);
-
-            //TODO: Implement 16Bit Version of Panning and Tilting
-            //this.Pan((uint)((uint)CurrentPanAngle / PanDegreePerDmxValue));
-            //this.Tilt((uint)((uint)CurrentTiltAngle / TiltDegreePerDmxValue));
             this.Pan(panAngle);
             this.Tilt(tiltAngle);
         }

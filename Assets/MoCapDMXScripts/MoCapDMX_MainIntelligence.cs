@@ -5,6 +5,7 @@ using System;
 using UnityEngine;
 using MoCapDMXScripts.MovingHeads;
 using MoCapDMXScripts;
+using MoCapDMXScripts.VirtualController;
 
 public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
@@ -48,7 +49,8 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
         natNetStreamerExecutable = new System.Diagnostics.Process();
         natNetStreamerExecutable.StartInfo.FileName = @"C:\Users\Daniel\Downloads\NatNet_SDK_2.10\NatNetSDK\Samples\bin\UnitySample.exe";
-        natNetStreamerExecutable.StartInfo.Arguments = @"10.13.1.1 10.13.1.7 127.0.0.1 C:\MoCapDMXUnity\Assets\Resources MoCapTake.xml";
+        //natNetStreamerExecutable.StartInfo.Arguments = @"10.13.1.1 10.13.1.3 127.0.0.1 C:\MoCapDMXUnity\Assets\Resources MoCapTake.xml";
+        natNetStreamerExecutable.StartInfo.Arguments = @"10.13.1.1 10.13.1.3 127.0.0.1";
         natNetStreamerExecutable.StartInfo.UseShellExecute = false;
         natNetStreamerExecutable.Start();
         
@@ -62,7 +64,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         ResetOrInitializeMovingHeads();
         //Must be called here, because the Update Method isnt called anymore
         SendDmxUdpPackage();
-        natNetStreamerExecutable.StandardInput.Write("q");
+        //natNetStreamerExecutable.StandardInput.Write("q");
         //natNetStreamerExecutable.Kill();
     }
 
@@ -111,54 +113,54 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         period += UnityEngine.Time.deltaTime;
 
         //Test the point to method
-        if (Input.GetKeyDown(KeyCode.P)) {
-            Vector3 point = new Vector3(0,0,0);
-            switch (testCounter) {
-                case 0: {
-                        point = new Vector3(x25_1.Location.x, 0, x25_1.Location.z);// new Vector3(0, 0, 0);
-                        dotty.transform.position = point;
-                    }
-                    break;
-                case 1:
-                    {
-                        point = new Vector3(0, 2, 0);
-                        dotty.transform.position = point;
-                    }
-                    break;
-                case 2:
-                    {
-                         point = new Vector3(2, 0, 2);
-                        dotty.transform.position = point;
-                    }
-                    break;
-                case 3:
-                    {
-                         point = new Vector3(1, 0, -1);
-                        dotty.transform.position = point;
-                    }
-                    break;
-                case 4:
-                    {
-                         point = new Vector3(-3, 2, -3);
-                        dotty.transform.position = point;
-                    }
-                    break;
-                case 5:
-                    {
-                         point = new Vector3(-2.5f, 0, 2.5f);
-                        dotty.transform.position = point;
-                        testCounter = -1;
-                    }
-                    break;
-            }
+        //if (Input.GetKeyDown(KeyCode.P)) {
+        //    Vector3 point = new Vector3(0,0,0);
+        //    switch (testCounter) {
+        //        case 0: {
+        //                point = new Vector3(x25_1.Location.x, 0, x25_1.Location.z);// new Vector3(0, 0, 0);
+        //                dotty.transform.position = point;
+        //            }
+        //            break;
+        //        case 1:
+        //            {
+        //                point = new Vector3(0, 2, 0);
+        //                dotty.transform.position = point;
+        //            }
+        //            break;
+        //        case 2:
+        //            {
+        //                 point = new Vector3(2, 0, 2);
+        //                dotty.transform.position = point;
+        //            }
+        //            break;
+        //        case 3:
+        //            {
+        //                 point = new Vector3(1, 0, -1);
+        //                dotty.transform.position = point;
+        //            }
+        //            break;
+        //        case 4:
+        //            {
+        //                 point = new Vector3(-3, 2, -3);
+        //                dotty.transform.position = point;
+        //            }
+        //            break;
+        //        case 5:
+        //            {
+        //                 point = new Vector3(-2.5f, 0, 2.5f);
+        //                dotty.transform.position = point;
+        //                testCounter = -1;
+        //            }
+        //            break;
+        //    }
 
-            x25_1.PointTo(point);
-            x25_2.PointTo(point);
-            x25_3.PointTo(point);
-            x25_4.PointTo(point);
-            x25_5.PointTo(point);
-            testCounter++;
-        }
+        //    x25_1.PointTo(point);
+        //    x25_2.PointTo(point);
+        //    x25_3.PointTo(point);
+        //    x25_4.PointTo(point);
+        //    x25_5.PointTo(point);
+        //    testCounter++;
+        //}
         
         //Test the moving heads
         if (Input.GetKey(KeyCode.I)) {
@@ -178,6 +180,9 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
                 Console.enabled = true;
                 Console.gameObject.SetActive(true);
             }
+        }
+        if (Input.GetKeyUp(KeyCode.F)) {
+            SetUpVirtualControllers();
         }
 
         if (Input.GetKeyDown(KeyCode.C) && !Input.GetKey(KeyCode.LeftShift)) {
@@ -301,12 +306,30 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
             }
 
         }
-
+            
         SetUpMovingHeads();
         //SendDmxUdpPackage();
     }
 
+    private void SetUpVirtualControllers() {
+        //VirtualOneParameterFader fader1 = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Pan, VirtualOneParameterFaderBoneParameter.YRotation, true,ManipulationType.Add,180.0f);
+        //VirtualOneParameterFader faderLam = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Pan, VirtualOneParameterFaderBoneParameter.YRotation, true, ManipulationType.Add, 180.0f);
+        //VirtualOneParameterFader fader2 = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Tilt, VirtualOneParameterFaderBoneParameter.ZRotation, true);
+        VirtualSingleParameterFader cutoffControl = new VirtualSingleParameterFader(ActorName + "_Chest", audioManipulator.SetHighPassFilter, (x => (100 - x.PositionInCentimeter.y) * 100), true,10.0f);
+        VirtualToggleSwitchByOneBone stateOfVolumeContro = new VirtualToggleSwitchByOneBone("VolumeControlToggle", ActorName + "_Chest", (x => x.PositionInCentimeter.y <= 100), cutoffControl);
+
+        VirtualSingleParameterFader pico10_Pan = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_10.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico10_Tilt = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_10.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico3_Pan = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_3.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico3_Tilt = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_3.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico6_Pan = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_6.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico6_Tilt = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_6.Tilt, (x => x.Rotation.eulerAngles.z - 180), true);
+        VirtualSingleParameterFader pico7_Pan = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_7.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico7_Tilt = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_7.Tilt, (x => x.Rotation.eulerAngles.z - 180), true);
+    }
+
     private void ProcessMoCapDMX() {
+        VirtualControllerCollection.ExecuteAllControllers();
 
 
         //MarkerFunctionalityLink Link1 = new MarkerFunctionalityLink(ActorName + "_Head", x25_1.Pan, true);
@@ -349,7 +372,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
         if (Head != null)
         {
-            Vector3 headPos = new Vector3(Head.Position.x, 0.0f, Head.Position.z);
+            //Vector3 headPos = new Vector3(Head.Position.x, 0.0f, Head.Position.z);
 
             //x25_1.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
             //x25_2.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
@@ -357,66 +380,38 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
             //x25_4.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
             //x25_5.PointTo(new Vector3(Head.Position.x, 0.0f, Head.Position.z));
 
-            x25_1.PointTo(Head.Position);
-            x25_2.PointTo(Head.Position);
-            x25_3.PointTo(Head.Position);
-            x25_4.PointTo(Head.Position);
-            x25_5.PointTo(Head.Position);
+            //    x25_1.PointTo(Head.Position);
+            //    x25_2.PointTo(Head.Position);
+            //    x25_3.PointTo(Head.Position);
+            //    x25_4.PointTo(Head.Position);
+            //    x25_5.PointTo(Head.Position);
 
 
         }
 
-        //MoCapBone LeftHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_LFArm");
-        //MoCapBone RightHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_RFArm");
-        //if (LeftHand != null && RightHand != null)
-        //{
-        //    float pan = LeftHand.Rotation.eulerAngles.y;
-        //    pico_10.Pan(pan);
-        //    pico_3.Pan(pan);
-
-        //    float tilt = LeftHand.Rotation.eulerAngles.z;
-        //    pico_10.Tilt(tilt);
-        //    pico_3.Tilt(tilt);
-
-        //    float panRight = (RightHand.Rotation.eulerAngles.y + 180.0f);
-        //    pico_6.Pan(panRight);
-        //    pico_7.Pan(panRight);
-
-        //    float tiltRight = (RightHand.Rotation.eulerAngles.z - 180.0f);
-        //    pico_6.Tilt(tiltRight);
-        //    pico_7.Tilt(tiltRight);
-        //    //float pan = LeftHand.Rotation.eulerAngles.y / (540.0f / 255.0f);
-        //    //pico_10.Pan((uint)pan);
-        //    //pico_3.Pan((uint)pan);
-
-        //    //float tilt = LeftHand.Rotation.eulerAngles.z / (180.0f / 255.0f);
-        //    //pico_10.Tilt((uint)tilt);
-        //    //pico_3.Tilt((uint)tilt);
-
-        //    //float panRight = (RightHand.Rotation.eulerAngles.y + 180.0f) / (540.0f / 255.0f);
-        //    //pico_6.Pan((uint)(panRight));
-        //    //pico_7.Pan((uint)(panRight));
-
-        //    //float tiltRight = (RightHand.Rotation.eulerAngles.z - 180.0f) / (180.0f / 255.0f);
-        //    //pico_6.Tilt((uint)(tiltRight));
-        //    //pico_7.Tilt((uint)(tiltRight));
-        //    float distance = (Vector3.Distance(LeftHand.Position, RightHand.Position)) * 100.0f;
-        //    if (distance < 30.0f)
-        //    {
-        //        pico_6.Strobo((uint)(255 - distance * 3));
-        //        pico_7.Strobo((uint)(255 - distance * 3));
-        //        pico_4.Strobo((uint)(255 - distance * 3));
-        //        pico_10.Strobo((uint)(255 - distance * 3));
-        //    }
-        //    else
-        //    {
-        //        pico_4.Strobo(0);
-        //        pico_6.Strobo(0);
-        //        pico_7.Strobo(0);
-        //        pico_10.Strobo(0);
-        //    }
-        //}
-    }
+        MoCapBone LeftHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_LFArm");
+        MoCapBone RightHand = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_RFArm");
+        MoCapBone Chest = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == ActorName + "_Chest");
+        if (LeftHand != null && RightHand != null)
+        {
+           
+            //    float distance = (Vector3.Distance(LeftHand.Position, RightHand.Position)) * 100.0f;
+            //    if (distance < 30.0f)
+            //    {
+            //        pico_6.Strobo((uint)(255 - distance * 3));
+            //        pico_7.Strobo((uint)(255 - distance * 3));
+            //        pico_4.Strobo((uint)(255 - distance * 3));
+            //        pico_10.Strobo((uint)(255 - distance * 3));
+            //    }
+            //    else
+            //    {
+            //        pico_4.Strobo(0);
+            //        pico_6.Strobo(0);
+            //        pico_7.Strobo(0);
+            //        pico_10.Strobo(0);
+            //    }
+        }
+        }
 
 
     public void UpdateVisualizationOfMovingheadsInUnityScene() {

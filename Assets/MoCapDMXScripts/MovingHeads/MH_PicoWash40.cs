@@ -41,9 +41,11 @@ namespace MoCapDMXScripts.MovingHeads
 
         public Vector3 Location { get; set; }
 
+        public static float MAXPAN = 540.0f;
+        public static float MAXTILT = 180.0f;
+        public float PanDegreePerDmxValue_16Bit = MAXPAN / 65536.0f;
+        public float TiltDegreePerDmxValue_16Bit = MAXTILT / 65536.0f;
 
-        public float PanDegreePerDmxValue_16Bit = 540.0f / 65536.0f;
-        public float TiltDegreePerDmxValue_16Bit = 270.0f / 65536.0f;
 
 
 
@@ -84,6 +86,7 @@ namespace MoCapDMXScripts.MovingHeads
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(pan & 0xff);
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress] = (byte)(0xff & (pan >> 8));
                 fCurrentPanAngle = angle;
+                Debug.Log("CURRENT ANGLE OF " + this.ToString() +  " Pan: " + fCurrentPanAngle);
             }
         }
 
@@ -105,13 +108,17 @@ namespace MoCapDMXScripts.MovingHeads
 
         public void Tilt(float angle)
         {
+            //if (angle <= MAXTILT) angle -= MAXTILT;
             if (NumberOfChannels == (int)CHANNELMODE.CH25)
             {
-                UInt16 tilt = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
+                if(angle <= MAXTILT)
+                {
+                    UInt16 tilt = (UInt16)(angle / TiltDegreePerDmxValue_16Bit);
 
-                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
-                m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(0xff & (tilt >> 8));
-                fCurrentTiltAngle = angle;
+                    m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
+                    m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(0xff & (tilt >> 8));
+                    fCurrentTiltAngle = angle;
+                }
             }
         }
         public void MasterDimmer(uint dmxValue)

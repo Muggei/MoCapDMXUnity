@@ -10,12 +10,14 @@ namespace MoCapDMXScripts
         public int ID { get; private set; }
         public string Name { get; private set; }
         public Vector3 Position { get; private set; }
+        public Vector3 PositionInCentimeter { get; private set; }
         public Quaternion Rotation { get; private set; }
 
         public MoCapBone(int ID, string name, Vector3 position, Quaternion rotation) {
             this.ID = ID;
             this.Name = name;
             this.Position = position;
+            this.PositionInCentimeter = new Vector3(position.x * 100, position.y * 100, position.z * 100);
             this.Rotation = rotation;
         }
     }

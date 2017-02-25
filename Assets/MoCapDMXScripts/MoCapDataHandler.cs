@@ -79,6 +79,7 @@ namespace MoCapDMXScripts
                     qx = -qx;
                     qw = -qw;
 
+                   
                     bones.Add(new MoCapBone(iD, boneName, new Vector3(x, y, z), new Quaternion(qx, qy, qz, qw)));
 
                     //== bone pose ==--
