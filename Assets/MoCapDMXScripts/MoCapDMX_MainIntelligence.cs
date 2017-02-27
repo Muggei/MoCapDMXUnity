@@ -315,17 +315,23 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         //VirtualOneParameterFader fader1 = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Pan, VirtualOneParameterFaderBoneParameter.YRotation, true,ManipulationType.Add,180.0f);
         //VirtualOneParameterFader faderLam = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Pan, VirtualOneParameterFaderBoneParameter.YRotation, true, ManipulationType.Add, 180.0f);
         //VirtualOneParameterFader fader2 = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Tilt, VirtualOneParameterFaderBoneParameter.ZRotation, true);
-        VirtualSingleParameterFader cutoffControl = new VirtualSingleParameterFader(ActorName + "_Chest", audioManipulator.SetHighPassFilter, (x => (100 - x.PositionInCentimeter.y) * 100), true,10.0f);
+        VirtualSingleParameterFader cutoffControl = new VirtualSingleParameterFader("cutoffFader", ActorName + "_Chest", audioManipulator.SetHighPassFilter, (x => (100 - x.PositionInCentimeter.y) * 100), true,10.0f);
         VirtualToggleSwitchByOneBone stateOfVolumeContro = new VirtualToggleSwitchByOneBone("VolumeControlToggle", ActorName + "_Chest", (x => x.PositionInCentimeter.y <= 100), cutoffControl);
 
-        VirtualSingleParameterFader pico10_Pan = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_10.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico10_Tilt = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_10.Tilt, (x => x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico3_Pan = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_3.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico3_Tilt = new VirtualSingleParameterFader(ActorName + "_LFArm", pico_3.Tilt, (x => x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico6_Pan = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_6.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico6_Tilt = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_6.Tilt, (x => x.Rotation.eulerAngles.z - 180), true);
-        VirtualSingleParameterFader pico7_Pan = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_7.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico7_Tilt = new VirtualSingleParameterFader(ActorName + "_RFArm", pico_7.Tilt, (x => x.Rotation.eulerAngles.z - 180), true);
+        VirtualTwoParameterFaderWithMultipleTargetsUINT stroboEffectFader = new VirtualTwoParameterFaderWithMultipleTargetsUINT(
+            "stroboFader", ActorName + "_LHand", ActorName + "_RHand", new Action<uint>[]{ pico_9.Strobo, pico_8.Strobo, pico_5.Strobo, pico_4.Strobo},
+            ((one,two) => (uint)(255 - (Vector3.Distance(one.Position, two.Position) * 100))) ,true,0);
+
+
+
+        VirtualSingleParameterFader pico10_Pan = new VirtualSingleParameterFader("pico10Pan", ActorName + "_LFArm", pico_10.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico10_Tilt = new VirtualSingleParameterFader("pico10Tilt", ActorName + "_LFArm", pico_10.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico3_Pan = new VirtualSingleParameterFader("pico3Pan", ActorName + "_LFArm", pico_3.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico3_Tilt = new VirtualSingleParameterFader("pico3Tilt", ActorName + "_LFArm", pico_3.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico6_Pan = new VirtualSingleParameterFader("pico6Pan", ActorName + "_RFArm", pico_6.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico6_Tilt = new VirtualSingleParameterFader("pico6Tilt", ActorName + "_RFArm", pico_6.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico7_Pan = new VirtualSingleParameterFader("pico7Pan", ActorName + "_RFArm", pico_7.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualSingleParameterFader pico7_Tilt = new VirtualSingleParameterFader("pico7Tilt", ActorName + "_RFArm", pico_7.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
     }
 
     private void ProcessMoCapDMX() {

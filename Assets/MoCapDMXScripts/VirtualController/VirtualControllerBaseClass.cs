@@ -7,7 +7,8 @@ namespace MoCapDMXScripts.VirtualController
 {
     public class VirtualControllerBaseClass
     {
-        protected bool IsEnabled;
+        public bool IsEnabled;
+        protected String _controllerID;
 
         public VirtualControllerBaseClass() {
         }
@@ -17,6 +18,11 @@ namespace MoCapDMXScripts.VirtualController
         }
         public void SetActiveState(bool isActive) {
             IsEnabled = isActive;
+        }
+
+        public override string ToString()
+        {
+            return "Viritual Controller: " + _controllerID;
         }
     }
 
