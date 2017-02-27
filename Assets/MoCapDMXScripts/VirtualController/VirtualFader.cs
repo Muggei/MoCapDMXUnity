@@ -229,6 +229,65 @@ namespace MoCapDMXScripts.VirtualController
         }
 
     }
+
+    public class VirtualPositionFaderWithMultipleTargets : VirtualControllerBaseClass
+    {
+
+        Action<Vector3>[] _function;
+        private string _boneNameOne;
+        private MoCapBone _boneOne;
+        //private Func<MoCapBone, Type> _BoneOneParameterUsage;
+        //private Func<MoCapBone, Type> _BoneTwoParameterUsage;
+        private Func<MoCapBone, Vector3> _mainManipulationFunc;
+
+        public VirtualPositionFaderWithMultipleTargets(String controllerID, String boneNameOne,
+            Action<Vector3>[] targetFunction, Func<MoCapBone, Vector3> ParameterUsageFunction, bool isEnabled = false)
+        {
+            if (targetFunction[0].Method.GetParameters()[0].ParameterType != ParameterUsageFunction.Method.ReturnType)
+            {
+                Debug.Log("Targed Function Parametertype does not match the returnType of the Lambdaexpression!");
+            }
+            _controllerID = controllerID;
+            _boneNameOne = boneNameOne;
+            IsEnabled = isEnabled;
+            _function = targetFunction;
+            _mainManipulationFunc = ParameterUsageFunction;
+            VirtualControllerCollection.Instance.Add(this);
+        }
+
+
+        public override void Execute()
+        {
+            if (IsEnabled)
+            {
+                var time = System.Diagnostics.Stopwatch.StartNew();
+                _boneOne = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == _boneNameOne);
+                if (_boneOne != null)
+                {
+                    Vector3 value = _mainManipulationFunc(_boneOne);
+                    foreach (Action<Vector3> func in _function)
+                    {
+                        func(value);
+                    }
+                    //_function(value);
+                }
+                else
+                {
+                    Debug.Log("Bone for VirtualController could not be found (is null)!");
+                }
+                time.Stop();
+                //Debug.Log("FaderLambda Execution took: " + time.Elapsed.TotalMilliseconds + " ms!");
+            }
+            else
+            {
+                //foreach (Action<uint> func in _function)
+                //{
+                //    func(_defaultIfInactive);
+                //}
+            }
+        }
+
+    }
 }
 
 

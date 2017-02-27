@@ -86,7 +86,7 @@ namespace MoCapDMXScripts.MovingHeads
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(pan & 0xff);
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress] = (byte)(0xff & (pan >> 8));
                 fCurrentPanAngle = angle;
-                Debug.Log("CURRENT ANGLE OF " + this.ToString() +  " Pan: " + fCurrentPanAngle);
+                //Debug.Log("CURRENT ANGLE OF " + this.ToString() +  " Pan: " + fCurrentPanAngle);
             }
         }
 
@@ -111,9 +111,16 @@ namespace MoCapDMXScripts.MovingHeads
             //if (angle <= MAXTILT) angle -= MAXTILT;
             if (NumberOfChannels == (int)CHANNELMODE.CH25)
             {
-                if(angle <= MAXTILT)
+                if (angle <= MAXTILT)
                 {
                     UInt16 tilt = (UInt16)(angle / TiltDegreePerDmxValue_16Bit);
+
+                    m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
+                    m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(0xff & (tilt >> 8));
+                    fCurrentTiltAngle = angle;
+                }
+                else {
+                    UInt16 tilt = (UInt16)(MAXTILT / TiltDegreePerDmxValue_16Bit);
 
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(0xff & (tilt >> 8));
@@ -221,6 +228,34 @@ namespace MoCapDMXScripts.MovingHeads
             this.ColorLED2(colorchannel, dmxValue);
             this.ColorLED3(colorchannel, dmxValue);
             this.ColorLED4(colorchannel, dmxValue);
+        }
+
+        public void AllLEDsWhite(uint dmxValue) {
+            this.ColorLED1(COLORCHANNEL.White, dmxValue);
+            this.ColorLED2(COLORCHANNEL.White, dmxValue);
+            this.ColorLED3(COLORCHANNEL.White, dmxValue);
+            this.ColorLED4(COLORCHANNEL.White, dmxValue);
+        }
+        public void AllLEDsBlue(uint dmxValue)
+        {
+            this.ColorLED1(COLORCHANNEL.Blue, dmxValue);
+            this.ColorLED2(COLORCHANNEL.Blue, dmxValue);
+            this.ColorLED3(COLORCHANNEL.Blue, dmxValue);
+            this.ColorLED4(COLORCHANNEL.Blue, dmxValue);
+        }
+        public void AllLEDsGreen(uint dmxValue)
+        {
+            this.ColorLED1(COLORCHANNEL.Green, dmxValue);
+            this.ColorLED2(COLORCHANNEL.Green, dmxValue);
+            this.ColorLED3(COLORCHANNEL.Green, dmxValue);
+            this.ColorLED4(COLORCHANNEL.Green, dmxValue);
+        }
+        public void AllLEDsRed(uint dmxValue)
+        {
+            this.ColorLED1(COLORCHANNEL.Red, dmxValue);
+            this.ColorLED2(COLORCHANNEL.Red, dmxValue);
+            this.ColorLED3(COLORCHANNEL.Red, dmxValue);
+            this.ColorLED4(COLORCHANNEL.Red, dmxValue);
         }
 
         //public void PointTo(Vector3 point)

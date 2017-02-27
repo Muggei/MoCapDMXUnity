@@ -65,7 +65,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         //Must be called here, because the Update Method isnt called anymore
         SendDmxUdpPackage();
         //natNetStreamerExecutable.StandardInput.Write("q");
-        //natNetStreamerExecutable.Kill();
+        natNetStreamerExecutable.Kill();
     }
 
     GameObject dotty;
@@ -112,56 +112,6 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         }
         period += UnityEngine.Time.deltaTime;
 
-        //Test the point to method
-        //if (Input.GetKeyDown(KeyCode.P)) {
-        //    Vector3 point = new Vector3(0,0,0);
-        //    switch (testCounter) {
-        //        case 0: {
-        //                point = new Vector3(x25_1.Location.x, 0, x25_1.Location.z);// new Vector3(0, 0, 0);
-        //                dotty.transform.position = point;
-        //            }
-        //            break;
-        //        case 1:
-        //            {
-        //                point = new Vector3(0, 2, 0);
-        //                dotty.transform.position = point;
-        //            }
-        //            break;
-        //        case 2:
-        //            {
-        //                 point = new Vector3(2, 0, 2);
-        //                dotty.transform.position = point;
-        //            }
-        //            break;
-        //        case 3:
-        //            {
-        //                 point = new Vector3(1, 0, -1);
-        //                dotty.transform.position = point;
-        //            }
-        //            break;
-        //        case 4:
-        //            {
-        //                 point = new Vector3(-3, 2, -3);
-        //                dotty.transform.position = point;
-        //            }
-        //            break;
-        //        case 5:
-        //            {
-        //                 point = new Vector3(-2.5f, 0, 2.5f);
-        //                dotty.transform.position = point;
-        //                testCounter = -1;
-        //            }
-        //            break;
-        //    }
-
-        //    x25_1.PointTo(point);
-        //    x25_2.PointTo(point);
-        //    x25_3.PointTo(point);
-        //    x25_4.PointTo(point);
-        //    x25_5.PointTo(point);
-        //    testCounter++;
-        //}
-        
         //Test the moving heads
         if (Input.GetKey(KeyCode.I)) {
             SetAllMovingHeadsTo100PercentWhiteAndLuminance();
@@ -312,17 +262,35 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
     }
 
     private void SetUpVirtualControllers() {
-        //VirtualOneParameterFader fader1 = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Pan, VirtualOneParameterFaderBoneParameter.YRotation, true,ManipulationType.Add,180.0f);
-        //VirtualOneParameterFader faderLam = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Pan, VirtualOneParameterFaderBoneParameter.YRotation, true, ManipulationType.Add, 180.0f);
-        //VirtualOneParameterFader fader2 = new VirtualOneParameterFader(ActorName + "_LFArm", pico_10.Tilt, VirtualOneParameterFaderBoneParameter.ZRotation, true);
         VirtualSingleParameterFader cutoffControl = new VirtualSingleParameterFader("cutoffFader", ActorName + "_Chest", audioManipulator.SetHighPassFilter, (x => (100 - x.PositionInCentimeter.y) * 100), true,10.0f);
         VirtualToggleSwitchByOneBone stateOfVolumeContro = new VirtualToggleSwitchByOneBone("VolumeControlToggle", ActorName + "_Chest", (x => x.PositionInCentimeter.y <= 100), cutoffControl);
 
-        VirtualTwoParameterFaderWithMultipleTargetsUINT stroboEffectFader = new VirtualTwoParameterFaderWithMultipleTargetsUINT(
-            "stroboFader", ActorName + "_LHand", ActorName + "_RHand", new Action<uint>[]{ pico_9.Strobo, pico_8.Strobo, pico_5.Strobo, pico_4.Strobo},
-            ((one,two) => (uint)(255 - (Vector3.Distance(one.Position, two.Position) * 100))) ,true,0);
+        VirtualTwoParameterFaderWithMultipleTargetsUINT colorFader = new VirtualTwoParameterFaderWithMultipleTargetsUINT(
+            "colorFader", ActorName + "_LHand", ActorName + "_RHand", 
+            new Action<uint>[]{
+                pico_9.AllLEDsGreen, pico_8.AllLEDsGreen, pico_5.AllLEDsGreen, pico_4.AllLEDsGreen,
+                pico_9.MasterDimmer, pico_8.MasterDimmer, pico_5.MasterDimmer, pico_4.MasterDimmer,
+            pico_3.AllLEDsBlue, pico_6.AllLEDsBlue, pico_7.AllLEDsBlue, pico_10.AllLEDsBlue,
+                pico_3.MasterDimmer, pico_6.MasterDimmer, pico_7.MasterDimmer, pico_10.MasterDimmer,
+            x25_1.MasterDimmer, x25_2.MasterDimmer, x25_3.MasterDimmer, x25_4.MasterDimmer, x25_5.MasterDimmer},
+            ((one,two) => (uint)(255 - (Vector3.Distance(one.Position, two.Position) * 100))) ,false,0);
 
+        //VirtualToggleSwitchByOneBone colorFaderSwitch = new VirtualToggleSwitchByOneBone("colorFaderSwitch", ActorName + "_LFoot", (bone => bone.PositionInCentimeter.y < 20.0f), colorFader);
+        VirtualToggleSwitchOverTimeByTwoBoneParameters timerColorSwitch = new VirtualToggleSwitchOverTimeByTwoBoneParameters("timesColorFaderSwitch",
+            ActorName + "_LShoulder", ActorName + "_RHand", ((one, two) => (Vector3.Distance(one.Position, two.Position) *100) < 20.0f), 1500.0f, colorFader);
 
+        x25_1.Shutter(5); x25_2.Shutter(5); x25_3.Shutter(5); x25_4.Shutter(5); x25_5.Shutter(5);
+        VirtualPositionFaderWithMultipleTargets chaser = new VirtualPositionFaderWithMultipleTargets(
+            "personChaser", ActorName + "_Chest", new Action<Vector3>[] {x25_1.PointTo ,x25_2.PointTo, x25_3.PointTo, x25_4.PointTo, x25_5.PointTo },
+            (bone => new Vector3(bone.Position.x,0,bone.Position.z)), false);
+
+        VirtualToggleSwitchOverTimeByTwoBoneParameters chaserToggleSwitch = new VirtualToggleSwitchOverTimeByTwoBoneParameters("chaserToggleSwitch",
+            ActorName + "_RShoulder", ActorName + "_LHand",((hand,shoulder) => (float)(Vector3.Distance(hand.Position,shoulder.Position) * 100) < 20.0f),1500.0f,chaser);
+
+        VirtualSingleParameterFader pico4_Tilt = new VirtualSingleParameterFader("pico4Tilt", ActorName + "_LUArm", pico_4.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico5_Tilt = new VirtualSingleParameterFader("pico5Tilt", ActorName + "_RUArm", pico_5.Tilt, (x => 360- x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico8_Tilt = new VirtualSingleParameterFader("pico8Tilt", ActorName + "_RUArm", pico_8.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
+        VirtualSingleParameterFader pico9_Tilt = new VirtualSingleParameterFader("pico9Tilt", ActorName + "_LUArm", pico_9.Tilt, (x => x.Rotation.eulerAngles.z), true);
 
         VirtualSingleParameterFader pico10_Pan = new VirtualSingleParameterFader("pico10Pan", ActorName + "_LFArm", pico_10.Pan, (x => x.Rotation.eulerAngles.y), true);
         VirtualSingleParameterFader pico10_Tilt = new VirtualSingleParameterFader("pico10Tilt", ActorName + "_LFArm", pico_10.Tilt, (x => x.Rotation.eulerAngles.z), true);
