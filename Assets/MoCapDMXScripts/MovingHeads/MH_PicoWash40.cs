@@ -86,7 +86,7 @@ namespace MoCapDMXScripts.MovingHeads
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(pan & 0xff);
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress] = (byte)(0xff & (pan >> 8));
                 fCurrentPanAngle = angle;
-                //Debug.Log("CURRENT ANGLE OF " + this.ToString() +  " Pan: " + fCurrentPanAngle);
+                // Debug.Log("CURRENT ANGLE OF " + this.ToString() +  " Pan: " + fCurrentPanAngle);
             }
         }
 

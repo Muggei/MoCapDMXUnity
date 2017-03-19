@@ -41,6 +41,7 @@ namespace MoCapDMXScripts
                     PrepareBoneToSkeleton();
                 }
 
+                
                 mNew = false;
 
 
@@ -51,7 +52,9 @@ namespace MoCapDMXScripts
                 XmlNodeList frameInfoList = xmlDoc.GetElementsByTagName("Frame");
                 for (int index = 0; index < frameInfoList.Count; index++)
                 {
-                    CurrentMoCapFrame.Instance.frame = System.Convert.ToInt32(frameInfoList[index].Attributes[0].InnerText);
+                    int id = System.Convert.ToInt32(frameInfoList[index].Attributes[0].InnerText);
+                    LogUtility.LogToFile("MoCapDataHandler: Frame ID = " + id + " Arrived!");
+                    CurrentMoCapFrame.Instance.frame = id;
                     CurrentMoCapFrame.Instance.timeStamp = (float)System.Convert.ToDouble(frameInfoList[index].Attributes[1].InnerText);
                 }
                 
@@ -153,6 +156,7 @@ namespace MoCapDMXScripts
                     qw = -qw;
                 }
             }
+            LogUtility.LogToFile("New Current MoCapFrame has been created!");
         }
 
         private string mPacket;

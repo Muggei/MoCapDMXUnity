@@ -67,7 +67,7 @@ namespace Assets
 
             currentFrame = MocapFrame;
             
-            string frameString = frameInfoList[MocapFrame].InnerXml;
+            string frameString = frameInfoList[MocapFrame].OuterXml +  frameInfoList[MocapFrame].InnerXml;
             DMXDataHandler.OnSamplePacket("<?xml version=\"1.0\" ?><Stream>\n" + frameString + "</Stream>");
         }
     }

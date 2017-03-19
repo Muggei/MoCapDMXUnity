@@ -10,9 +10,15 @@ using MoCapDMXScripts.VirtualController;
 public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
     //Inspector Fields
+    public string ServerIP;
+    public string DeviceIP;
+    public bool SaveSession;
+    public string SaveFileName;
+
     [SerializeField]public string DmxUdpDestIP;
     [SerializeField]public int DmxUdpPort;
     public UDPPackage.PROTOCOL_TYPE dmxProtocolType = UDPPackage.PROTOCOL_TYPE.ESP;
+    
 
     public Canvas Console;
     public UnityEngine.UI.InputField channelInputField;
@@ -48,9 +54,15 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         
 
         natNetStreamerExecutable = new System.Diagnostics.Process();
-        natNetStreamerExecutable.StartInfo.FileName = @"C:\Users\Daniel\Downloads\NatNet_SDK_2.10\NatNetSDK\Samples\bin\UnitySample.exe";
-        //natNetStreamerExecutable.StartInfo.Arguments = @"10.13.1.1 10.13.1.3 127.0.0.1 C:\MoCapDMXUnity\Assets\Resources MoCapTake.xml";
-        natNetStreamerExecutable.StartInfo.Arguments = @"10.13.1.1 10.13.1.3 127.0.0.1";
+        natNetStreamerExecutable.StartInfo.FileName = @"C:\MoCapDMXUnity\MoCapDMX_DataInput\Release\MoCapDMXDataInput.exe";
+        if (SaveSession)
+        {
+            natNetStreamerExecutable.StartInfo.Arguments = ServerIP + " " + DeviceIP + @" 127.0.0.1 C:\MoCapDMXUnity\MoCapDMX\Assets\Resources " + SaveFileName + ".xml";
+        }
+        else {
+            natNetStreamerExecutable.StartInfo.Arguments = ServerIP + " " + DeviceIP + @" 127.0.0.1";
+        }
+        
         natNetStreamerExecutable.StartInfo.UseShellExecute = false;
         natNetStreamerExecutable.Start();
         
@@ -61,24 +73,18 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
     /// In this ApplicationQuit Method the UnitySample.Exe is killed
     /// </summary>
     void OnApplicationQuit() {
+        LogUtility.SaveLogFile();
         ResetOrInitializeMovingHeads();
         //Must be called here, because the Update Method isnt called anymore
         SendDmxUdpPackage();
-        //natNetStreamerExecutable.StandardInput.Write("q");
+        //natNetStreamerExecutable.StandardInput.WriteLine("q");
         natNetStreamerExecutable.Kill();
     }
 
-    GameObject dotty;
 
 
     // Use this for initialization
     void Start () {
-        //for tests only 
-        dotty = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        dotty.transform.position = new Vector3(10, 10, 10);
-        dotty.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-        dotty.GetComponent<MeshRenderer>().material = Resources.Load("Black4", typeof(Material)) as Material;
-
         ActorName = this.GetComponent<MoCapDMXScripts.MoCapDataHandler>().Actor;
         audioManipulator = this.GetComponent<AudioManipulator>();
 
@@ -91,9 +97,11 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         ResetOrInitializeMovingHeads();
         //Reset All movingheads on program start
         SendDmxUdpPackage();
-        
+
         //Set Up Movingheads of H 1.5
         //SetUpMovingHeads();
+
+        LogUtility.StartLogTimer();
 
 
 
@@ -262,7 +270,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
     }
 
     private void SetUpVirtualControllers() {
-        VirtualSingleParameterFader cutoffControl = new VirtualSingleParameterFader("cutoffFader", ActorName + "_Chest", audioManipulator.SetHighPassFilter, (x => (100 - x.PositionInCentimeter.y) * 100), true,10.0f);
+        VirtualFaderByOneBone cutoffControl = new VirtualFaderByOneBone("cutoffFader", ActorName + "_Chest", audioManipulator.SetHighPassFilter, (x => (100 - x.PositionInCentimeter.y) * 100), true,10.0f);
         VirtualToggleSwitchByOneBone stateOfVolumeContro = new VirtualToggleSwitchByOneBone("VolumeControlToggle", ActorName + "_Chest", (x => x.PositionInCentimeter.y <= 100), cutoffControl);
 
         VirtualTwoParameterFaderWithMultipleTargetsUINT colorFader = new VirtualTwoParameterFaderWithMultipleTargetsUINT(
@@ -275,6 +283,16 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
             x25_1.MasterDimmer, x25_2.MasterDimmer, x25_3.MasterDimmer, x25_4.MasterDimmer, x25_5.MasterDimmer},
             ((one,two) => (uint)(255 - (Vector3.Distance(one.Position, two.Position) * 100))) ,false,0);
 
+        VirtualValueSwitchByTwoBones flasher = new VirtualValueSwitchByTwoBones("FLASHER",
+            ActorName + "_LHand", ActorName + "_RHand", new Action<uint>[] { pico_1.MasterDimmer,pico_1.AllLEDsWhite, pico_2.MasterDimmer,pico_2.AllLEDsWhite },
+            ((r, l) => Vector3.Distance(r.PositionInCentimeter, l.PositionInCentimeter) <= 10.0f), 255, 0);
+
+        //VirtualFaderFromInitialValueWithMultipleTargetsUINT faderInitial = new VirtualFaderFromInitialValueWithMultipleTargetsUINT("fadeFromStartvalue", ActorName + "_LHand",
+        //    new Action<uint>[] { pico_1.Strobo }, (x => (uint)x.PositionInCentimeter.y ), false);
+
+        //VirtualToggleSwitchByTwoBones initSwitch = new VirtualToggleSwitchByTwoBones("initSwitcher", ActorName + "_LHand", ActorName + "_RHand",
+        //    ((b1, b2) => Vector2.Distance(new Vector2(b1.Position.x,b1.Position.z), new Vector2(b2.Position.x,b2.Position.z)) * 100 <= 20), faderInitial);
+
         //VirtualToggleSwitchByOneBone colorFaderSwitch = new VirtualToggleSwitchByOneBone("colorFaderSwitch", ActorName + "_LFoot", (bone => bone.PositionInCentimeter.y < 20.0f), colorFader);
         VirtualToggleSwitchOverTimeByTwoBoneParameters timerColorSwitch = new VirtualToggleSwitchOverTimeByTwoBoneParameters("timesColorFaderSwitch",
             ActorName + "_LShoulder", ActorName + "_RHand", ((one, two) => (Vector3.Distance(one.Position, two.Position) *100) < 20.0f), 1500.0f, colorFader);
@@ -282,24 +300,24 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         x25_1.Shutter(5); x25_2.Shutter(5); x25_3.Shutter(5); x25_4.Shutter(5); x25_5.Shutter(5);
         VirtualPositionFaderWithMultipleTargets chaser = new VirtualPositionFaderWithMultipleTargets(
             "personChaser", ActorName + "_Chest", new Action<Vector3>[] {x25_1.PointTo ,x25_2.PointTo, x25_3.PointTo, x25_4.PointTo, x25_5.PointTo },
-            (bone => new Vector3(bone.Position.x,0,bone.Position.z)), false);
+            (bone => new Vector3(bone.Position.x,0,bone.Position.z)), true);
 
         VirtualToggleSwitchOverTimeByTwoBoneParameters chaserToggleSwitch = new VirtualToggleSwitchOverTimeByTwoBoneParameters("chaserToggleSwitch",
-            ActorName + "_RShoulder", ActorName + "_LHand",((hand,shoulder) => (float)(Vector3.Distance(hand.Position,shoulder.Position) * 100) < 20.0f),1500.0f,chaser);
+            ActorName + "_RShoulder", ActorName + "_LHand", ((hand, shoulder) => (float)(Vector3.Distance(hand.Position, shoulder.Position) * 100) < 20.0f), 1500.0f, chaser);
 
-        VirtualSingleParameterFader pico4_Tilt = new VirtualSingleParameterFader("pico4Tilt", ActorName + "_LUArm", pico_4.Tilt, (x => x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico5_Tilt = new VirtualSingleParameterFader("pico5Tilt", ActorName + "_RUArm", pico_5.Tilt, (x => 360- x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico8_Tilt = new VirtualSingleParameterFader("pico8Tilt", ActorName + "_RUArm", pico_8.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico9_Tilt = new VirtualSingleParameterFader("pico9Tilt", ActorName + "_LUArm", pico_9.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico4_Tilt = new VirtualFaderByOneBone("pico4Tilt", ActorName + "_LUArm", pico_4.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico5_Tilt = new VirtualFaderByOneBone("pico5Tilt", ActorName + "_RUArm", pico_5.Tilt, (x => 360- x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico8_Tilt = new VirtualFaderByOneBone("pico8Tilt", ActorName + "_RUArm", pico_8.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico9_Tilt = new VirtualFaderByOneBone("pico9Tilt", ActorName + "_LUArm", pico_9.Tilt, (x => x.Rotation.eulerAngles.z), true);
 
-        VirtualSingleParameterFader pico10_Pan = new VirtualSingleParameterFader("pico10Pan", ActorName + "_LFArm", pico_10.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico10_Tilt = new VirtualSingleParameterFader("pico10Tilt", ActorName + "_LFArm", pico_10.Tilt, (x => x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico3_Pan = new VirtualSingleParameterFader("pico3Pan", ActorName + "_LFArm", pico_3.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico3_Tilt = new VirtualSingleParameterFader("pico3Tilt", ActorName + "_LFArm", pico_3.Tilt, (x => x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico6_Pan = new VirtualSingleParameterFader("pico6Pan", ActorName + "_RFArm", pico_6.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico6_Tilt = new VirtualSingleParameterFader("pico6Tilt", ActorName + "_RFArm", pico_6.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
-        VirtualSingleParameterFader pico7_Pan = new VirtualSingleParameterFader("pico7Pan", ActorName + "_RFArm", pico_7.Pan, (x => x.Rotation.eulerAngles.y), true);
-        VirtualSingleParameterFader pico7_Tilt = new VirtualSingleParameterFader("pico7Tilt", ActorName + "_RFArm", pico_7.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico10_Pan = new VirtualFaderByOneBone("pico10Pan", ActorName + "_LFArm", pico_10.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualFaderByOneBone pico10_Tilt = new VirtualFaderByOneBone("pico10Tilt", ActorName + "_LFArm", pico_10.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico3_Pan = new VirtualFaderByOneBone("pico3Pan", ActorName + "_LFArm", pico_3.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualFaderByOneBone pico3_Tilt = new VirtualFaderByOneBone("pico3Tilt", ActorName + "_LFArm", pico_3.Tilt, (x => x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico6_Pan = new VirtualFaderByOneBone("pico6Pan", ActorName + "_RFArm", pico_6.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualFaderByOneBone pico6_Tilt = new VirtualFaderByOneBone("pico6Tilt", ActorName + "_RFArm", pico_6.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
+        VirtualFaderByOneBone pico7_Pan = new VirtualFaderByOneBone("pico7Pan", ActorName + "_RFArm", pico_7.Pan, (x => x.Rotation.eulerAngles.y), true);
+        VirtualFaderByOneBone pico7_Tilt = new VirtualFaderByOneBone("pico7Tilt", ActorName + "_RFArm", pico_7.Tilt, (x => 360 - x.Rotation.eulerAngles.z), true);
     }
 
     private void ProcessMoCapDMX() {

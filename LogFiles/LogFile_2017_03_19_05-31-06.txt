@@ -1,0 +1,2 @@
+Frame 0||10324||MoCapDataHandler: Frame ID = 517791 Arrived!
+Frame 517791||10327||New Current MoCapFrame has been created!

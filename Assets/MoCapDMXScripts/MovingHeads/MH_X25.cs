@@ -28,7 +28,7 @@ namespace MoCapDMXScripts.MovingHeads
         public enum GOBOTYPE
         {
             NOGOBO = 0,
-            REVOLVERMAGAZIN = 12,
+            REVOLVERDRUM  = 12,
             CELLSTRUCTURE = 19,
             WHIRLWIND = 28,
             BIOHAZARD = 35,
@@ -61,6 +61,9 @@ namespace MoCapDMXScripts.MovingHeads
         public Vector3 Location { get; set; }
         public Vector3 NormalVector { get; set; }
         public Vector3 CurrentDirectionVector { get; set; }
+
+        public static float MAXPAN = 540.0f;
+        public static float MAXTILT = 270.0f;
 
         public float PanDegreePerDmxValue = 540.0f / 255.0f;
         public float TiltDegreePerDmxValue = 270.0f / 255.0f;
@@ -196,69 +199,141 @@ namespace MoCapDMXScripts.MovingHeads
             }
         }
 
+
         public void PointTo(Vector3 destPoint) {
-            Vector3 tempCurrentForSignCheck = CurrentDirectionVector;
+            
+            CurrentDirectionVector = (destPoint - Location);
+            float panAngle = Vector2.Angle(new Vector2(this.NormalVector.x, this.NormalVector.z), new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z));
+            panAngle = CalculateCoursAngle(panAngle);
 
-            CurrentDirectionVector = (destPoint - Location).normalized;
+            float result = (float)(Math.Acos(this.Location.y / (destPoint - Location).magnitude) * (180.0f / Math.PI));
+            float tiltAngle = (MAXTILT/2) - result;
 
-            Vector2 normalXZ = new Vector2(this.NormalVector.x, this.NormalVector.z);
-            Vector2 currentXZ = new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z);
-            float panAngle = Vector2.Angle(normalXZ,currentXZ);
-
-            float result = (float)(Math.Acos(this.Location.y / (destPoint - Location).magnitude) * (180.0f/Math.PI));
-            float tiltAngle = 135 - result;
-
-            panAngle = HandlePanAngleResult(currentXZ, panAngle);
             this.Pan(panAngle);
             this.Tilt(tiltAngle);
         }
 
-        private float HandlePanAngleResult(Vector2 XZ, float angle) {
-            bool xSign = (XZ.x >= 0) ? true: false;
-            bool zSign = (XZ.y >= 0) ? true : false;
-
-            int normXSign; 
+        private float CalculateCoursAngle(float angle)
+        {
+            int normXSign;
             int normZSign;
             if (this.NormalVector.x < 0) normXSign = -1;
             else if (this.NormalVector.x > 0) normXSign = 1;
             else normXSign = 0;
-
             if (this.NormalVector.z < 0) normZSign = -1;
             else if (this.NormalVector.z > 0) normZSign = 1;
             else normZSign = 0;
 
-            if (normXSign == -1 && normZSign == 0)
+            if (normXSign == 0 && normZSign == 1)
             {
-                if (xSign && zSign) return angle;
-                else if (xSign && !zSign) return angle;
-                else if (!xSign && !zSign) return 360 - angle;
-                else return angle;//360 -angle;
+                if (this.Location.x <=  this.CurrentDirectionVector.x)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
             }
-            else if (normXSign == 1 && normZSign == 0)
+            else if (normXSign == -1 && normZSign == 0)
             {
-                if (xSign && zSign) return 360 - angle;
-                else if (xSign && !zSign) return angle;
-                else if (!xSign && !zSign) return angle;
-                else return angle;
+                if (this.Location.z <= this.CurrentDirectionVector.z)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
             }
             else if (normXSign == 0 && normZSign == -1)
             {
-                if (xSign && zSign) return angle;
-                else if (xSign && !zSign) return 360 - angle;
-                else if (!xSign && !zSign) return 360 - angle;
-                else return angle;
+                if (this.Location.x >= this.CurrentDirectionVector.x)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
             }
-            else {
-                if (xSign && zSign) return angle;
-                else if (xSign && !zSign) return angle;
-                else if (!xSign && !zSign) return 360- angle;
-                else return 360 - angle;
+            else if (normXSign == 1 && normZSign == 0)
+            {
+                if (this.Location.z >= this.CurrentDirectionVector.z)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
             }
-
-
-
-            
+            else
+            {
+                return angle;
+            }
         }
+
+        //public void PointTo(Vector3 destPoint) {
+        //    Vector3 tempCurrentForSignCheck = CurrentDirectionVector;
+
+        //    CurrentDirectionVector = (destPoint - Location).normalized;
+
+        //    Vector2 normalXZ = new Vector2(this.NormalVector.x, this.NormalVector.z);
+        //    Vector2 currentXZ = new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z);
+        //    float panAngle = Vector2.Angle(normalXZ,currentXZ);
+
+        //    float result = (float)(Math.Acos(this.Location.y / (destPoint - Location).magnitude) * (180.0f/Math.PI));
+        //    float tiltAngle = 135 - result;
+
+        //    panAngle = HandlePanAngleResult(currentXZ, panAngle);
+        //    this.Pan(panAngle);
+        //    this.Tilt(tiltAngle);
+        //}
+
+
+        //private float HandlePanAngleResult(Vector2 XZ, float angle) {
+        //    bool xSign = (XZ.x >= 0) ? true: false;
+        //    bool zSign = (XZ.y >= 0) ? true : false;
+
+        //    int normXSign; 
+        //    int normZSign;
+        //    if (this.NormalVector.x < 0) normXSign = -1;
+        //    else if (this.NormalVector.x > 0) normXSign = 1;
+        //    else normXSign = 0;
+
+        //    if (this.NormalVector.z < 0) normZSign = -1;
+        //    else if (this.NormalVector.z > 0) normZSign = 1;
+        //    else normZSign = 0;
+
+        //    if (normXSign == -1 && normZSign == 0)
+        //    {
+        //        if (xSign && zSign) return angle;
+        //        else if (xSign && !zSign) return angle;
+        //        else if (!xSign && !zSign) return 360 - angle;
+        //        else return angle;//360 -angle;
+        //    }
+        //    else if (normXSign == 1 && normZSign == 0)
+        //    {
+        //        if (xSign && zSign) return 360 - angle;
+        //        else if (xSign && !zSign) return angle;
+        //        else if (!xSign && !zSign) return angle;
+        //        else return angle;
+        //    }
+        //    else if (normXSign == 0 && normZSign == -1)
+        //    {
+        //        if (xSign && zSign) return angle;
+        //        else if (xSign && !zSign) return 360 - angle;
+        //        else if (!xSign && !zSign) return 360 - angle;
+        //        else return angle;
+        //    }
+        //    else {
+        //        if (xSign && zSign) return angle;
+        //        else if (xSign && !zSign) return angle;
+        //        else if (!xSign && !zSign) return 360- angle;
+        //        else return 360 - angle;
+        //    } 
+        //}
 
         public override String ToString()
         {

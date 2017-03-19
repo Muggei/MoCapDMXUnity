@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace MoCapDMXScripts.VirtualController
 {
-    public class VirtualSingleParameterFader : VirtualControllerBaseClass
+    public class VirtualFaderByOneBone : VirtualControllerBaseClass
     {
         Action<float> _function;
         private string _boneName;
@@ -14,7 +14,7 @@ namespace MoCapDMXScripts.VirtualController
         private Func<MoCapBone, float> _parameterUsage;
         private float _defaultIfInactive;
 
-        public VirtualSingleParameterFader(String controllerID, String boneName, Action<float> function, Func<MoCapBone, float> parameterUsage, bool isEnabled = false, float defaultValueIfInactive = 0)
+        public VirtualFaderByOneBone(String controllerID, String boneName, Action<float> function, Func<MoCapBone, float> parameterUsage, bool isEnabled = false, float defaultValueIfInactive = 0)
         {
             _controllerID = controllerID;
             _boneName = boneName;
@@ -51,7 +51,7 @@ namespace MoCapDMXScripts.VirtualController
 
     }
 
-    public class VirtualTwoParameterFaderUINT : VirtualControllerBaseClass
+    public class VirtualFaderByTwoBonesUINT : VirtualControllerBaseClass
     {
         
         Action<uint> _function;
@@ -64,7 +64,7 @@ namespace MoCapDMXScripts.VirtualController
         private Func<MoCapBone, MoCapBone, uint> _mainManipulationFunc;
         private uint _defaultIfInactive;
 
-        public VirtualTwoParameterFaderUINT(String controllerID, String boneNameOne, String boneNameTwo,
+        public VirtualFaderByTwoBonesUINT(String controllerID, String boneNameOne, String boneNameTwo,
             Action<uint> targetFunction, Func<MoCapBone, MoCapBone, uint> ParameterUsageFunction, bool isEnabled = false, uint defaultValueIfInactive = 0)
         {
             if (targetFunction.Method.GetParameters()[0].ParameterType != ParameterUsageFunction.Method.ReturnType) {
@@ -284,6 +284,69 @@ namespace MoCapDMXScripts.VirtualController
                 //{
                 //    func(_defaultIfInactive);
                 //}
+            }
+        }
+
+    }
+
+    public class VirtualFaderFromInitialValueWithMultipleTargetsUINT : VirtualControllerBaseClass
+    {
+
+        Action<uint>[] _function;
+        private uint valueAtActivation = 0;
+        private bool valueHasBeenSet = false;
+        private string _boneNameOne;
+        private MoCapBone _boneOne;
+        private Func<MoCapBone, uint> _mainManipulationFunc;
+
+        public VirtualFaderFromInitialValueWithMultipleTargetsUINT(String controllerID, String boneNameOne,
+            Action<uint>[] targetFunction, Func<MoCapBone, uint> ParameterUsageFunction, bool isEnabled = false)
+        {
+            if (targetFunction[0].Method.GetParameters()[0].ParameterType != ParameterUsageFunction.Method.ReturnType)
+            {
+                Debug.Log("Targed Function Parametertype does not match the returnType of the Lambdaexpression!");
+            }
+            _controllerID = controllerID;
+            _boneNameOne = boneNameOne;
+            IsEnabled = isEnabled;
+            _function = targetFunction;
+            _mainManipulationFunc = ParameterUsageFunction;
+            VirtualControllerCollection.Instance.Add(this);
+        }
+
+
+        public override void Execute()
+        {
+            if (IsEnabled)
+            {
+                //var time = System.Diagnostics.Stopwatch.StartNew();
+                _boneOne = CurrentMoCapFrame.Instance.bones.Find(x => x.Name == _boneNameOne);
+                if (_boneOne != null)
+                {
+                    if (!valueHasBeenSet) {
+                        valueHasBeenSet = true;
+                        valueAtActivation = _mainManipulationFunc(_boneOne);
+                    }
+                    uint value = (uint)Math.Abs((uint )_mainManipulationFunc(_boneOne) - valueAtActivation);
+                    if (value < 0) value = 0;
+                    Debug.Log("Fader with Startvalue: " + value);
+                    foreach (Action<uint> func in _function)
+                    {
+                        func(value);
+                    }
+                    //_function(value);
+                }
+                else
+                {
+                    Debug.Log("Bone for VirtualController could not be found (is null)!");
+                }
+                //time.Stop();
+                //Debug.Log("FaderLambda Execution took: " + time.Elapsed.TotalMilliseconds + " ms!");
+            }
+            else
+            {
+                valueAtActivation = 0;
+                valueHasBeenSet = false;
             }
         }
 
