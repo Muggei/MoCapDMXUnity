@@ -20,7 +20,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
     [SerializeField]public string DmxUdpDestIP;
     [SerializeField]public int DmxUdpPort;
-    public UDPPackage.PROTOCOL_TYPE dmxProtocolType = UDPPackage.PROTOCOL_TYPE.ESP;
+    public DMXPackage.PROTOCOL_TYPE dmxProtocolType = DMXPackage.PROTOCOL_TYPE.ESP;
     
 
     public Canvas Console;
@@ -29,7 +29,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
 
     //UDP Client
     private UdpClient udpClient;
-    private UDPPackage dmxUDPPackage;
+    private DMXPackage dmxUDPPackage;
     private float dmxSendingInterval = 0.022f;
     private float period = 0.0f;
 
@@ -311,7 +311,7 @@ public class MoCapDMX_MainIntelligence : MonoBehaviour {
         //dmxUDPPackage = new UDPPackage(dmxProtocolType);
         if (dmxUDPPackage == null)
         {
-            dmxUDPPackage = new UDPPackage(dmxProtocolType);
+            dmxUDPPackage = new DMXPackage(dmxProtocolType);
         }
         else
         {

@@ -7,7 +7,7 @@ namespace MoCapDMXScripts
 {
 
 
-    public class UDPPackage : List<byte>
+    public class DMXPackage : List<byte>
     {
         public enum PROTOCOL_TYPE
         {
@@ -33,7 +33,7 @@ namespace MoCapDMXScripts
             }
         }
 
-        public UDPPackage(PROTOCOL_TYPE type) {
+        public DMXPackage(PROTOCOL_TYPE type) {
             ProtocolType = type;
 
             if (ProtocolType == PROTOCOL_TYPE.ARTNET) {
