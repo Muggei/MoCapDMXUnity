@@ -29,6 +29,7 @@ using System;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using MoCapDMXScripts;
 
 
 
@@ -108,13 +109,15 @@ public class SlipStream : MonoBehaviour
 
 				//== time this out of packets are coming in faster than we can process ==--
 				maxSubPacketProcess--;
-			}
+
+                if(LogUtility.performanceTesting) LogUtility.LogToFile("SlipStream: UDP Package has been decoded!");
+            }
 		}
 		catch(System.Exception)
-		{}
+		{ if (LogUtility.performanceTesting) LogUtility.LogToFile("SlipStream: UDP Package could not be decoded!"); }
 	}
  
-	void Update()
+	void FixedUpdate()
 	{
 		UDPRead();
 	}

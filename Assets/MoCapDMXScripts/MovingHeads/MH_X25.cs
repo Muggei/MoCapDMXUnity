@@ -97,11 +97,18 @@ namespace MoCapDMXScripts.MovingHeads
 
         public void Pan(float angle) {
             if (NumberOfChannels == (int)CHANNELMODE.CH12) {
+                double ctimeP = LogUtility.GetCurrentTime();
                 UInt16 pan = (UInt16)(angle / PanDegreePerDmxValue_16Bit);
 
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 2] = (byte)(pan & 0xff);
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress] = (byte)(0xff & (pan >> 8));
                 fCurrentPanAngle = angle;
+
+                if (LogUtility.performanceMethodsTesting)
+                {   
+                    LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimeP).ToString() + " ms " + " for writing Pan to dmxPackage");
+                }
+                
             }
         }
 
@@ -123,11 +130,17 @@ namespace MoCapDMXScripts.MovingHeads
         public void Tilt(float angle) {
             if (NumberOfChannels == (int)CHANNELMODE.CH12)
             {
+                double ctimeT = LogUtility.GetCurrentTime();
                 UInt16 tilt = (UInt16)(angle / TiltDegreePerDmxValue_16Bit);
 
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 3] = (byte)(tilt & 0xff);
                 m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 1] = (byte)(0xff & (tilt >> 8));
                 fCurrentTiltAngle = angle;
+
+                if (LogUtility.performanceMethodsTesting)
+                {   
+                    LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimeT).ToString() + " ms " + " for writing Tilt to dmxPackage");
+                }
             }
         }
 
@@ -140,8 +153,15 @@ namespace MoCapDMXScripts.MovingHeads
             {
                 if (NumberOfChannels == (int)CHANNELMODE.CH12)
                 {
+                    double ctimeD = LogUtility.GetCurrentTime();
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 7] = (byte)dmxValue;
                     CurrentDimmerValue = dmxValue;
+
+                    if (LogUtility.performanceMethodsTesting)
+                    {
+                        
+                        LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimeD).ToString() + " ms " + " for writing MasterDimmer to dmxPackage");
+                    }
                 }
             }
         }
@@ -154,8 +174,14 @@ namespace MoCapDMXScripts.MovingHeads
             {
                 if (NumberOfChannels == (int)CHANNELMODE.CH12)
                 {
+                    double ctimeS = LogUtility.GetCurrentTime();
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 6] = (byte)dmxValue;
                     CurrentShutterValue = dmxValue;
+
+                    if (LogUtility.performanceMethodsTesting)
+                    {
+                        LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimeS).ToString() + " ms " + " for writing Shutter to dmxPackage");
+                    }
                 }
             }
         }
@@ -170,8 +196,13 @@ namespace MoCapDMXScripts.MovingHeads
             {
                 if (NumberOfChannels == (int)CHANNELMODE.CH12)
                 {
+                    double ctimeC = LogUtility.GetCurrentTime();
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 5] = (byte)color;
                     CurrentColor = color;
+                    if (LogUtility.performanceMethodsTesting)
+                    {
+                        LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimeC).ToString() + " ms " + " for writing Color to dmxPackage");
+                    }
                 }
             }
         }
@@ -186,22 +217,34 @@ namespace MoCapDMXScripts.MovingHeads
             {
                 if (NumberOfChannels == (int)CHANNELMODE.CH12)
                 {
+                    double ctimeG = LogUtility.GetCurrentTime();
                     m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 8] = (byte)gobotype;
                     CurrentGoboType = gobotype;
+                    if (LogUtility.performanceMethodsTesting)
+                    {
+                        LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimeG).ToString() + " ms " + " for writing GoboWheelType to dmxPackage");
+                    }
                 }
             }
         }
 
-
-        private void SetMaximas() {
-            if (NumberOfChannels == (int)CHANNELMODE.CH12) {
-
+        public void GoboRotation(uint dmxValue)
+        {
+            if (dmxValue < 0 || dmxValue > 255)
+            {
+                Debug.LogAssertion(this.ToString() + " Cannot rotate Gobo because value has to be between 0 and 255.");
+            }
+            else
+            {
+                if (NumberOfChannels == (int)CHANNELMODE.CH12)
+                {
+                    m_dmxUDPPackage[m_dmxDataOffset + StartAddress + 9] = (byte)dmxValue;
+                }
             }
         }
 
-
         public void PointTo(Vector3 destPoint) {
-            
+            double ctimePoint = LogUtility.GetCurrentTime();
             CurrentDirectionVector = (destPoint - Location);
             float panAngle = Vector2.Angle(new Vector2(this.NormalVector.x, this.NormalVector.z), new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z));
             panAngle = CalculateCoursAngle(panAngle);
@@ -211,6 +254,7 @@ namespace MoCapDMXScripts.MovingHeads
 
             this.Pan(panAngle);
             this.Tilt(tiltAngle);
+            if (LogUtility.performanceMethodsTesting) LogUtility.LogToFile((LogUtility.GetCurrentTime() - ctimePoint).ToString() + " ms - PointTo Method has been finshed!"); //of " + this.ToString() + "
         }
 
         private float CalculateCoursAngle(float angle)
@@ -273,67 +317,6 @@ namespace MoCapDMXScripts.MovingHeads
                 return angle;
             }
         }
-
-        //public void PointTo(Vector3 destPoint) {
-        //    Vector3 tempCurrentForSignCheck = CurrentDirectionVector;
-
-        //    CurrentDirectionVector = (destPoint - Location).normalized;
-
-        //    Vector2 normalXZ = new Vector2(this.NormalVector.x, this.NormalVector.z);
-        //    Vector2 currentXZ = new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z);
-        //    float panAngle = Vector2.Angle(normalXZ,currentXZ);
-
-        //    float result = (float)(Math.Acos(this.Location.y / (destPoint - Location).magnitude) * (180.0f/Math.PI));
-        //    float tiltAngle = 135 - result;
-
-        //    panAngle = HandlePanAngleResult(currentXZ, panAngle);
-        //    this.Pan(panAngle);
-        //    this.Tilt(tiltAngle);
-        //}
-
-
-        //private float HandlePanAngleResult(Vector2 XZ, float angle) {
-        //    bool xSign = (XZ.x >= 0) ? true: false;
-        //    bool zSign = (XZ.y >= 0) ? true : false;
-
-        //    int normXSign; 
-        //    int normZSign;
-        //    if (this.NormalVector.x < 0) normXSign = -1;
-        //    else if (this.NormalVector.x > 0) normXSign = 1;
-        //    else normXSign = 0;
-
-        //    if (this.NormalVector.z < 0) normZSign = -1;
-        //    else if (this.NormalVector.z > 0) normZSign = 1;
-        //    else normZSign = 0;
-
-        //    if (normXSign == -1 && normZSign == 0)
-        //    {
-        //        if (xSign && zSign) return angle;
-        //        else if (xSign && !zSign) return angle;
-        //        else if (!xSign && !zSign) return 360 - angle;
-        //        else return angle;//360 -angle;
-        //    }
-        //    else if (normXSign == 1 && normZSign == 0)
-        //    {
-        //        if (xSign && zSign) return 360 - angle;
-        //        else if (xSign && !zSign) return angle;
-        //        else if (!xSign && !zSign) return angle;
-        //        else return angle;
-        //    }
-        //    else if (normXSign == 0 && normZSign == -1)
-        //    {
-        //        if (xSign && zSign) return angle;
-        //        else if (xSign && !zSign) return 360 - angle;
-        //        else if (!xSign && !zSign) return 360 - angle;
-        //        else return angle;
-        //    }
-        //    else {
-        //        if (xSign && zSign) return angle;
-        //        else if (xSign && !zSign) return angle;
-        //        else if (!xSign && !zSign) return 360- angle;
-        //        else return 360 - angle;
-        //    } 
-        //}
 
         public override String ToString()
         {

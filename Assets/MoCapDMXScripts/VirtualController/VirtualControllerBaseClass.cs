@@ -9,6 +9,7 @@ namespace MoCapDMXScripts.VirtualController
     {
         public bool IsEnabled;
         protected String _controllerID;
+        public String ID { get; private set; }
 
         public VirtualControllerBaseClass() {
         }
@@ -22,7 +23,7 @@ namespace MoCapDMXScripts.VirtualController
 
         public override string ToString()
         {
-            return "Viritual Controller: " + _controllerID;
+            return "Virtual Controller: " + _controllerID;
         }
     }
 

@@ -21,7 +21,7 @@ namespace MoCapDMXScripts
             PrepareBoneToSkeleton();
         }
 
-        void Update()
+        void FixedUpdate()
         {
             //== if there is new data or settings changed, apply data and retarget ==--
 
@@ -53,7 +53,7 @@ namespace MoCapDMXScripts
                 for (int index = 0; index < frameInfoList.Count; index++)
                 {
                     int id = System.Convert.ToInt32(frameInfoList[index].Attributes[0].InnerText);
-                    LogUtility.LogToFile("MoCapDataHandler: Frame ID = " + id + " Arrived!");
+                    if(LogUtility.frameTimeTesting) LogUtility.LogToFile("MoCapDataHandler: Frame ID = " + id + " Arrived!");
                     CurrentMoCapFrame.Instance.frame = id;
                     CurrentMoCapFrame.Instance.timeStamp = (float)System.Convert.ToDouble(frameInfoList[index].Attributes[1].InnerText);
                 }
@@ -156,7 +156,7 @@ namespace MoCapDMXScripts
                     qw = -qw;
                 }
             }
-            LogUtility.LogToFile("New Current MoCapFrame has been created!");
+            if(LogUtility.frameTimeTesting) LogUtility.LogToFile("New Current MoCapFrame has been created!");
         }
 
         private string mPacket;

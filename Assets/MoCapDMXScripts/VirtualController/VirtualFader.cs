@@ -59,8 +59,6 @@ namespace MoCapDMXScripts.VirtualController
         private string _boneNameTwo;
         private MoCapBone _boneOne;
         private MoCapBone _boneTwo;
-        //private Func<MoCapBone, Type> _BoneOneParameterUsage;
-        //private Func<MoCapBone, Type> _BoneTwoParameterUsage;
         private Func<MoCapBone, MoCapBone, uint> _mainManipulationFunc;
         private uint _defaultIfInactive;
 
@@ -108,7 +106,7 @@ namespace MoCapDMXScripts.VirtualController
 
     }
 
-    public class VirtualTwoParameterFaderWithMultipleTargetsUINT : VirtualControllerBaseClass
+    public class VirtualTwoParameterFader_uint : VirtualControllerBaseClass
     {
 
         Action<uint>[] _function;
@@ -116,12 +114,10 @@ namespace MoCapDMXScripts.VirtualController
         private string _boneNameTwo;
         private MoCapBone _boneOne;
         private MoCapBone _boneTwo;
-        //private Func<MoCapBone, Type> _BoneOneParameterUsage;
-        //private Func<MoCapBone, Type> _BoneTwoParameterUsage;
         private Func<MoCapBone, MoCapBone, uint> _mainManipulationFunc;
         private uint _defaultIfInactive;
 
-        public VirtualTwoParameterFaderWithMultipleTargetsUINT(String controllerID, String boneNameOne, String boneNameTwo,
+        public VirtualTwoParameterFader_uint(String controllerID, String boneNameOne, String boneNameTwo,
             Action<uint>[] targetFunction, Func<MoCapBone, MoCapBone, uint> ParameterUsageFunction, bool isEnabled = false, uint defaultValueIfInactive = 0)
         {
             if (targetFunction[0].Method.GetParameters()[0].ParameterType != ParameterUsageFunction.Method.ReturnType)
@@ -172,31 +168,25 @@ namespace MoCapDMXScripts.VirtualController
 
     }
 
-    public class VirtualTwoParameterFaderFLOAT : VirtualControllerBaseClass
+    public class VirtualTwoParameterFader_f : VirtualControllerBaseClass
     {
 
-        Action<float> _function;
+        Action<float>[] _functions;
         private string _boneNameOne;
         private string _boneNameTwo;
         private MoCapBone _boneOne;
         private MoCapBone _boneTwo;
-        //private Func<MoCapBone, Type> _BoneOneParameterUsage;
-        //private Func<MoCapBone, Type> _BoneTwoParameterUsage;
         private Func<MoCapBone, MoCapBone, float> _mainManipulationFunc;
         private float _defaultIfInactive;
 
-        public VirtualTwoParameterFaderFLOAT(String controllerID, String boneNameOne, String boneNameTwo,
-            Action<float> targetFunction, Func<MoCapBone, MoCapBone, float> ParameterUsageFunction, bool isEnabled = false, float defaultValueIfInactive = 0)
+        public VirtualTwoParameterFader_f(String controllerID, String boneNameOne, String boneNameTwo,
+            Action<float>[] targetFunctions, Func<MoCapBone, MoCapBone, float> ParameterUsageFunction, bool isEnabled = false, float defaultValueIfInactive = 0)
         {
-            if (targetFunction.Method.GetParameters()[0].ParameterType != ParameterUsageFunction.Method.ReturnType)
-            {
-                Debug.Log("Targed Function Parametertype does not match the returnType of the Lambdaexpression!");
-            }
             _controllerID = controllerID;
             _boneNameOne = boneNameOne;
             _boneNameTwo = boneNameTwo;
             IsEnabled = isEnabled;
-            _function = targetFunction;
+            _functions = targetFunctions;
             _mainManipulationFunc = ParameterUsageFunction;
             _defaultIfInactive = defaultValueIfInactive;
             VirtualControllerCollection.Instance.Add(this);
@@ -213,7 +203,10 @@ namespace MoCapDMXScripts.VirtualController
                 if (_boneOne != null && _boneTwo != null)
                 {
                     float value = _mainManipulationFunc(_boneOne, _boneTwo);
-                    _function(value);
+                    foreach (Action<float> act in _functions)
+                    {
+                        act(value);
+                    }
                 }
                 else
                 {
@@ -224,7 +217,10 @@ namespace MoCapDMXScripts.VirtualController
             }
             else
             {
-                _function(_defaultIfInactive);
+                foreach (Action<float> act in _functions)
+                {
+                    act(_defaultIfInactive);
+                }
             }
         }
 

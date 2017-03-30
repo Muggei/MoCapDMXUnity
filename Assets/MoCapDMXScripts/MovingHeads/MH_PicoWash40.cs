@@ -40,6 +40,8 @@ namespace MoCapDMXScripts.MovingHeads
         public uint CurrentStroboValue { get; private set; }
 
         public Vector3 Location { get; set; }
+        public Vector3 NormalVector { get; set; }
+        public Vector3 CurrentDirectionVector { get; set; }
 
         public static float MAXPAN = 540.0f;
         public static float MAXTILT = 180.0f;
@@ -258,39 +260,85 @@ namespace MoCapDMXScripts.MovingHeads
             this.ColorLED4(COLORCHANNEL.Red, dmxValue);
         }
 
-        //public void PointTo(Vector3 point)
-        //{
-        //    float x, y, z;
+        public void PointTo(Vector3 destPoint)
+        {
 
-        //    int panVal = CustomHelpers::PanAndTiltAngleCalculator(
-        //        std::get < 0 > (this->currentVector),
-        //        std::get < 2 > (this->currentVector),
-        //        XCoordinate,
-        //        ZCoordinate,
-        //        std::get < 0 > (*point),
-        //        std::get < 2 > (*point),
-        //        x,
-        //        z
-        //        );
+            CurrentDirectionVector = (destPoint - Location);
+            float panAngle = Vector2.Angle(new Vector2(this.NormalVector.x, this.NormalVector.z), new Vector2(this.CurrentDirectionVector.x, this.CurrentDirectionVector.z));
+            panAngle = CalculateCoursAngle(panAngle);
 
-        //    this->SetCurrentVector(x, std::get < 1 > (this->currentVector), z);
+            float result = (float)(Math.Acos(this.Location.y / (destPoint - Location).magnitude) * (180.0f / Math.PI));
+            float tiltAngle = (MAXTILT / 2) - result;
 
-        //    int tiltVal = CustomHelpers::PanAndTiltAngleCalculator(
-        //        std::get < 0 > (this->currentVector),
-        //        std::get < 1 > (this->currentVector),
-        //        XCoordinate,
-        //        YCoordinate,
-        //        std::get < 0 > (*point),
-        //        std::get < 1 > (*point),
-        //        x,
-        //        y
-        //        );
-        //    this->SetCurrentVector(x, y, std::get < 2 > (this->currentVector));
+            this.Pan(panAngle);
+            this.Tilt(tiltAngle);
+            if (LogUtility.performanceTesting) LogUtility.LogToFile("PointTo Method of " + this.ToString() + " has been finshed!");
+        }
 
-        //    double bla = panVal * (255.0 / 540.0);
-        //    float doIT = this->currentPanValue + bla;
-        //    this->Pan(doIT);
-        //    this->Tilt(currentTiltValue + (tiltVal * (255 / 180)));
-        //}
+        private float CalculateCoursAngle(float angle)
+        {
+            int normXSign;
+            int normZSign;
+            if (this.NormalVector.x < 0) normXSign = -1;
+            else if (this.NormalVector.x > 0) normXSign = 1;
+            else normXSign = 0;
+            if (this.NormalVector.z < 0) normZSign = -1;
+            else if (this.NormalVector.z > 0) normZSign = 1;
+            else normZSign = 0;
+
+            if (normXSign == 0 && normZSign == 1)
+            {
+                if (this.Location.x <= this.CurrentDirectionVector.x)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
+            }
+            else if (normXSign == -1 && normZSign == 0)
+            {
+                if (this.Location.z <= this.CurrentDirectionVector.z)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
+            }
+            else if (normXSign == 0 && normZSign == -1)
+            {
+                if (this.Location.x >= this.CurrentDirectionVector.x)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
+            }
+            else if (normXSign == 1 && normZSign == 0)
+            {
+                if (this.Location.z >= this.CurrentDirectionVector.z)
+                {
+                    return angle;
+                }
+                else
+                {
+                    return 360 - angle;
+                }
+            }
+            else
+            {
+                return angle;
+            }
+        }
+
+        public override String ToString()
+        {
+            return "Movinghead: " + Name + "\t     |Startadress: " + StartAddress.ToString() + "\t|Channelmode: " + NumberOfChannels.ToString() + "\n";
+        }
     }
 }

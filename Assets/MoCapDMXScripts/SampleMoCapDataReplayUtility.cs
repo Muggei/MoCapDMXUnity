@@ -51,7 +51,7 @@ namespace Assets
         }
 
 
-        void FixedUpdate()
+        void Update()
         {
             if (ReplayRunning)
             {

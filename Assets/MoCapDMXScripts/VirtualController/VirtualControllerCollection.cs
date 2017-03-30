@@ -25,11 +25,17 @@ namespace MoCapDMXScripts.VirtualController
 
         public static void ExecuteAllControllers()
         {
-            LogUtility.LogToFile("ExcecuteAllControllers started! ControllerCount: " + VirtualControllerCollection.Instance.Count);
+            if(LogUtility.performanceTesting) LogUtility.LogToFile("ExcecuteAllControllers started! ControllerCount: " + VirtualControllerCollection.Instance.Count);
             foreach (VirtualControllerBaseClass controller in Instance) {
                 controller.Execute();
+                if (LogUtility.performanceTesting) {
+                    LogUtility.LogToFile(controller.ToString() + " executed!");
+                }
             }
-            LogUtility.LogToFile("ExcecuteAllControllers finished! ControllerCount: " + VirtualControllerCollection.Instance.Count);
+            if (LogUtility.performanceTesting)
+            {
+                LogUtility.LogToFile("ExcecuteAllControllers finished! ControllerCount: " + VirtualControllerCollection.Instance.Count);
+            }
         }
     }
 }
